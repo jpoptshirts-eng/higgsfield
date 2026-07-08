@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Jacinto De Matos — Portfolio
 
-## Getting Started
+Premium, scroll-driven one-page portfolio built with Next.js, React, TypeScript, Tailwind CSS, and GSAP ScrollTrigger.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/components/StorySection.tsx` — Pinned hero (3 states) + work split-screen showcase
+- `src/hooks/usePortfolioScroll.ts` — GSAP ScrollTrigger scrub + pin logic
+- `src/components/ApproachSection.tsx` — Approach cards grid
+- `src/components/ResultsSection.tsx` — Results metric chips
+- `src/components/ContactSection.tsx` — Final contact CTA
+- `src/data/site.ts` — All copy and asset paths
+- `public/images/` — Optimised hero, project, approach and contact assets
 
-## Learn More
+## Scroll behaviour
 
-To learn more about Next.js, take a look at the following resources:
+1. **Hero** — Pinned full-screen section. Scroll scrubs through 3 hero states (copy + portrait crossfade).
+2. **Work** — Same pinned viewport transitions into split-screen project showcase (6 projects).
+3. **Approach / Results / Contact** — Normal scroll with subtle reveal animations.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Scrolling up reverses all transitions. `prefers-reduced-motion` shortens scrub distance and disables motion-led effects.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Assets
 
-## Deploy on Vercel
+Hero portraits use high-quality stills with cinematic crossfades. To add Higgsfield-generated portrait videos later, place files in `public/media/hero/` and wire them in `StorySection`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Build
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+npm start
+```
