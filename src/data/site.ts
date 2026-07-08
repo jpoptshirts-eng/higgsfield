@@ -74,7 +74,7 @@ export const PROJECTS = [
     description:
       "AI-assisted shopping lists that turn real-world intent into faster, more relevant grocery planning.",
     metric: "6/7 ease-of-use score",
-    image: "/images/projects/shopping-lists.png",
+    image: "/media/work/shopping-lists.jpg",
     alt: "Waitrose shopping lists tablet interface",
   },
   {
@@ -83,7 +83,7 @@ export const PROJECTS = [
     description:
       "A repeat-purchase experience designed to help customers rebuild their regular shop with less effort.",
     metric: "5m 06s faster repeat-purchase journey",
-    image: "/images/projects/quick-shop.png",
+    image: "/media/work/quick-shop.jpg",
     alt: "Quick Shop mobile interface",
   },
   {
@@ -92,7 +92,7 @@ export const PROJECTS = [
     description:
       "A simplified account strategy that reduced delivery complexity while unlocking customer value faster.",
     metric: "50%+ effort reduction",
-    image: "/images/projects/cellar.png",
+    image: "/media/work/cellar.jpg",
     alt: "Waitrose Cellar wine glass visual",
   },
   {
@@ -101,7 +101,7 @@ export const PROJECTS = [
     description:
       "High-trust fintech journeys designed to make complex IPO investing clearer, safer and easier to complete.",
     metric: "4 high-trust journeys redesigned",
-    image: "/images/projects/primarybid.png",
+    image: "/media/work/primarybid.jpg",
     alt: "PrimaryBid sign up mobile journey",
   },
   {
@@ -110,7 +110,7 @@ export const PROJECTS = [
     description:
       "A mobile learning experience shaped around motivation, progress and long-term language retention.",
     metric: "NPS 62",
-    image: "/images/projects/kaizen.png",
+    image: "/media/work/kaizen-languages.jpg",
     alt: "Kaizen Languages lessons screen",
   },
   {
@@ -119,7 +119,7 @@ export const PROJECTS = [
     description:
       "A connected smart-home app experience across iKettle, Smarter Coffee and FridgeCam.",
     metric: "3 connected products supported",
-    image: "/images/projects/smarter.png",
+    image: "/media/work/smarter.jpg",
     alt: "Smarter FridgeCam and mobile app",
   },
 ] as const;

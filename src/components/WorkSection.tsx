@@ -21,8 +21,8 @@ export const WorkSection = forwardRef<HTMLElement>(function WorkSection(
         data-work-pin
         className="work-pin relative h-screen w-full overflow-hidden bg-black"
       >
-        <div className="grid h-full grid-cols-1 md:grid-cols-2">
-          <div className="relative z-10 flex min-h-0 flex-col justify-center px-6 pb-8 pt-28 md:px-0 md:pb-0 md:pt-24">
+        <div className="work-section">
+          <div className="work-left relative z-10">
             <div data-work-panel className="work-panel">
               <ul className="space-y-0.5 sm:space-y-1">
                 {PROJECTS.map((project, index) => (
@@ -50,7 +50,7 @@ export const WorkSection = forwardRef<HTMLElement>(function WorkSection(
                     <p className="work-project-description leading-relaxed text-white/75">
                       {project.description}
                     </p>
-                    <p className="work-project-metric mt-4">
+                    <p className="work-project-metric">
                       <span className="text-accent">Key metric: </span>
                       <span className="text-white/80">{project.metric}</span>
                     </p>
@@ -70,26 +70,23 @@ export const WorkSection = forwardRef<HTMLElement>(function WorkSection(
             </div>
           </div>
 
-          <div className="work-media-column relative min-h-[40vh] md:min-h-0 md:h-full">
-            <div
-              data-work-media
-              className="work-media-panel absolute inset-0 overflow-hidden"
-            >
+          <div className="work-media">
+            <div data-work-media className="work-media-panel">
               {PROJECTS.map((project, index) => (
                 <div
                   key={project.id}
                   data-project-image={index}
-                  className="absolute inset-0 bg-black"
+                  className="work-media-slide"
                   style={{ opacity: index === 0 ? 1 : 0, pointerEvents: "none" }}
                 >
                   <Image
                     src={project.image}
                     alt={project.alt}
                     fill
-                    loading={index < 2 ? "eager" : "lazy"}
+                    priority={index === 0}
                     quality={95}
                     sizes="50vw"
-                    className="object-cover object-center"
+                    className="work-media-image"
                   />
                 </div>
               ))}
