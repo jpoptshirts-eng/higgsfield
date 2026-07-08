@@ -30,7 +30,7 @@ type HeroMediaProps = {
 };
 
 /**
- * Portrait-only hero media.
+ * Portrait-only hero media — stable container, no opacity/filter on video.
  * Desktop: scroll-scrubbed video (paused, never autoplays).
  * Fallback: static portrait crossfade on mobile, reduced-motion, or load error.
  */
@@ -46,33 +46,27 @@ export function HeroMedia({
     const video = videoRef.current;
     if (!video || !showVideo) return;
 
-    // Keep paused — scrub only via ScrollTrigger
     const keepPaused = () => {
       if (!video.paused) video.pause();
     };
 
     video.pause();
     video.addEventListener("play", keepPaused);
-    video.addEventListener("loadeddata", keepPaused);
 
     return () => {
       video.removeEventListener("play", keepPaused);
-      video.removeEventListener("loadeddata", keepPaused);
     };
   }, [showVideo]);
 
   return (
     <div
       data-hero-media
-      className={`relative h-full w-full overflow-hidden bg-black ${className}`}
+      className={`hero-media ${className}`}
     >
-      {/* Scroll-scrub video — desktop only */}
       <video
         ref={videoRef}
         data-hero-video
-        className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-300 ${
-          showVideo ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className={`hero-video ${showVideo ? "" : "hero-video--hidden"}`}
         src={HERO_VIDEO_SRC}
         muted
         playsInline
@@ -90,10 +84,11 @@ export function HeroMedia({
         <div
           key={portrait.src}
           data-hero-image={index === 2 ? "front" : index}
-          className={`absolute inset-0 transition-opacity duration-300 ${
-            showVideo ? "pointer-events-none opacity-0" : ""
-          }`}
-          style={{ opacity: showVideo ? 0 : index === 0 ? 1 : 0 }}
+          className="hero-portrait-layer"
+          style={{
+            opacity: showVideo ? 0 : index === 0 ? 1 : 0,
+            pointerEvents: "none",
+          }}
           aria-hidden={showVideo}
         >
           <Image
@@ -101,16 +96,13 @@ export function HeroMedia({
             alt={portrait.alt}
             fill
             priority={index === 0}
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 768px) 100vw, 52vw"
             className={`object-contain ${portrait.position}`}
           />
         </div>
       ))}
 
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-black/80 md:to-black/55"
-      />
+      <div aria-hidden className="hero-media-gradient" />
     </div>
   );
 }

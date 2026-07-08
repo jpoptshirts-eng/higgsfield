@@ -23,7 +23,6 @@
 html {
   background: #000;
   color-scheme: dark;
-  scroll-snap-type: y proximity;
 }
 
 body {
@@ -95,6 +94,112 @@ h3,
   letter-spacing: 0.01em;
 }
 
+/* Stable hero copy stack — one centred container, states layered inside */
+.hero-copy-stack {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  min-height: 280px;
+}
+
+@media (min-width: 768px) {
+  .hero-copy-stack {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    min-height: 0;
+  }
+}
+
+.hero-copy-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Stable hero media — no layout animation during scroll */
+.hero-media-column {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+.hero-media {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  background: #000;
+  transform: translateZ(0);
+}
+
+@media (min-width: 768px) {
+  .hero-media {
+    width: 52vw;
+    height: 100vh;
+  }
+}
+
+.hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 58% center;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  filter: none;
+  opacity: 1;
+}
+
+.hero-video--hidden {
+  visibility: hidden;
+  position: absolute;
+}
+
+.hero-portrait-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-media-gradient {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to left,
+    transparent,
+    transparent,
+    rgba(0, 0, 0, 0.55)
+  );
+}
+
+.work-media-panel {
+  transform: translateZ(0);
+}
+
+.work-panel {
+  width: 100%;
+  max-width: 800px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+@media (min-width: 768px) {
+  .work-panel {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+  }
+}
+
 /* Snap normal (non-pinned) sections to viewport start */
 #approach,
 #results,
@@ -120,7 +225,6 @@ video {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-    scroll-snap-type: none;
   }
 
   *,

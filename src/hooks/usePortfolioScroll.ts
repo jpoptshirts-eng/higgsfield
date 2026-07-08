@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { NavId } from "@/data/site";
 import { PROJECTS } from "@/data/site";
+import { createHeroVideoScrubber } from "@/hooks/heroVideoScrub";
 
 const HERO_STEP_COUNT = 3;
 const WORK_STEP_COUNT = PROJECTS.length;
 const TOTAL_STEPS = HERO_STEP_COUNT + WORK_STEP_COUNT;
-
-const STORY_SNAP_INCREMENT = 1 / (TOTAL_STEPS - 1);
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
@@ -23,11 +23,11 @@ function isMobile(): boolean {
 }
 
 function getHeroCopyEls(root: HTMLElement) {
-  return {
-    first: root.querySelector<HTMLElement>('[data-hero-copy="0"]'),
-    second: root.querySelector<HTMLElement>('[data-hero-copy="1"]'),
-    metrics: root.querySelector<HTMLElement>('[data-hero-copy="metrics"]'),
-  };
+  return [
+    root.querySelector<HTMLElement>('[data-hero-copy="0"]'),
+    root.querySelector<HTMLElement>('[data-hero-copy="1"]'),
+    root.querySelector<HTMLElement>('[data-hero-copy="metrics"]'),
+  ].filter(Boolean) as HTMLElement[];
 }
 
 function scrollToStoryStep(
@@ -46,6 +46,11 @@ function scrollToStoryStep(
     (storyTrigger.end - storyTrigger.start) * progress;
 
   window.scrollTo({ top: target, behavior });
+}
+
+/** Opacity for hero copy index i at fractional hero position 0–2 */
+function heroCopyOpacity(i: number, heroPos: number): number {
+  return Math.max(0, 1 - Math.abs(heroPos - i));
 }
 
 export function usePortfolioScroll() {
@@ -73,15 +78,24 @@ export function usePortfolioScroll() {
       }
 
       const el = document.getElementById(id);
-      if (el) {
-        window.scrollTo({ top: el.offsetTop, behavior });
+      if (!el) return;
+
+      if (reducedMotion) {
+        gsap.set(window, { scrollTo: { y: el, autoKill: true } });
+        return;
       }
+
+      gsap.to(window, {
+        scrollTo: { y: el, autoKill: true },
+        duration: 0.85,
+        ease: "power2.inOut",
+      });
     },
     [reducedMotion],
   );
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
     const reduced = prefersReducedMotion();
     const mobile = isMobile();
@@ -91,6 +105,8 @@ export function usePortfolioScroll() {
     const story = storyRef.current;
     const pin = story?.querySelector<HTMLElement>("[data-story-pin]");
     if (!story || !pin) return;
+
+    let destroyed = false;
 
     const ctx = gsap.context(() => {
       const heroCopies = getHeroCopyEls(pin);
@@ -129,6 +145,9 @@ export function usePortfolioScroll() {
       });
 
       const heroVideo = pin.querySelector<HTMLVideoElement>("[data-hero-video]");
+      let videoScrubber: ReturnType<typeof createHeroVideoScrubber> | null =
+        null;
+      let videoCleanup: (() => void) | undefined;
 
       const isVideoScrubActive = () =>
         !reduced &&
@@ -136,184 +155,198 @@ export function usePortfolioScroll() {
         !!heroVideo &&
         !heroVideo.hasAttribute("data-failed") &&
         Number.isFinite(heroVideo.duration) &&
-        heroVideo.duration > 0;
+        heroVideo.duration > 0 &&
+        !!videoScrubber;
 
-      // Ensure video metadata is ready before scrubbing
-      let videoCleanup: (() => void) | undefined;
-      if (heroVideo && !reduced && !mobile) {
-        const onMeta = () => ScrollTrigger.refresh();
-        const onError = () => heroVideo.setAttribute("data-failed", "true");
-        heroVideo.addEventListener("loadedmetadata", onMeta);
-        heroVideo.addEventListener("error", onError);
-        if (heroVideo.readyState >= 1) onMeta();
-        heroVideo.pause();
-
-        videoCleanup = () => {
-          heroVideo.removeEventListener("loadedmetadata", onMeta);
-          heroVideo.removeEventListener("error", onError);
-        };
-      }
-
-      /** Map hero scroll step (0–2) to video progress (0 → 0.5 → 1). */
-      const heroStepToVideoProgress = (clamped: number) => {
-        const heroStep = Math.min(HERO_STEP_COUNT - 1, Math.max(0, clamped));
-        return heroStep / (HERO_STEP_COUNT - 1);
-      };
-
-      const setHeroPortraits = (
-        opacities: { first: number; second: number; front: number },
-      ) => {
+      const setHeroPortraits = (heroPos: number) => {
         if (isVideoScrubActive()) return;
-        if (heroImage0) gsap.set(heroImage0, { opacity: opacities.first });
-        if (heroImage1) gsap.set(heroImage1, { opacity: opacities.second });
-        if (heroImageFront) gsap.set(heroImageFront, { opacity: opacities.front });
+
+        const opacities = [0, 0, 0];
+        [0, 1, 2].forEach((i) => {
+          opacities[i] = heroCopyOpacity(i, heroPos);
+        });
+
+        if (heroImage0) gsap.set(heroImage0, { opacity: opacities[0] });
+        if (heroImage1) gsap.set(heroImage1, { opacity: opacities[1] });
+        if (heroImageFront) gsap.set(heroImageFront, { opacity: opacities[2] });
       };
 
-      const scrubHeroVideo = (clamped: number) => {
-        if (!isVideoScrubActive() || !heroVideo) return;
-
-        const duration = heroVideo.duration;
-        const progress = heroStepToVideoProgress(clamped);
-        const target = Math.min(
-          duration - 0.04,
-          Math.max(0, progress * duration),
+      const scrubHeroVideo = (heroPos: number) => {
+        if (!isVideoScrubActive() || !videoScrubber) return;
+        const progress = gsap.utils.clamp(
+          0,
+          1,
+          heroPos / (HERO_STEP_COUNT - 1),
         );
-
-        if (Math.abs(heroVideo.currentTime - target) > 0.02) {
-          heroVideo.currentTime = target;
-        }
-        heroVideo.pause();
+        videoScrubber.setProgress(progress);
       };
 
-      const setActiveProject = (index: number, blend = 0) => {
-        projectTitles.forEach((title, i) => {
-          const button = title.parentElement;
-          button?.classList.toggle("text-accent", i === index);
-          button?.classList.toggle("text-white", i !== index);
-        });
+      const setHeroCopy = (heroPos: number) => {
+        const nearSnap = Math.abs(heroPos - Math.round(heroPos)) < 0.04;
+        const pos = nearSnap ? Math.round(heroPos) : heroPos;
 
-        projectDetails.forEach((detail, i) => {
-          gsap.set(detail, {
-            opacity: i === index ? 1 : 0,
-            y: i === index ? 0 : 8,
-          });
-        });
-
-        projectImages.forEach((image, i) => {
-          let opacity = 0;
-          if (i === index) opacity = 1 - blend;
-          if (i === index + 1) opacity = blend;
-          gsap.set(image, {
+        heroCopies.forEach((el, i) => {
+          const opacity = nearSnap ? (i === pos ? 1 : 0) : heroCopyOpacity(i, pos);
+          gsap.set(el, {
             opacity,
-            scale: 1 + (1 - opacity) * 0.03,
+            y: 0,
+            pointerEvents: opacity > 0.98 ? "auto" : "none",
+          });
+        });
+      };
+
+      const setActiveProject = (index: number) => {
+        const i = gsap.utils.clamp(0, WORK_STEP_COUNT - 1, index);
+
+        projectTitles.forEach((title, idx) => {
+          const button = title.parentElement;
+          button?.classList.toggle("text-accent", idx === i);
+          button?.classList.toggle("text-white", idx !== i);
+        });
+
+        projectDetails.forEach((detail, idx) => {
+          gsap.set(detail, {
+            opacity: idx === i ? 1 : 0,
+            y: 0,
+            pointerEvents: idx === i ? "auto" : "none",
           });
         });
 
-        projectDots.forEach((dot, i) => {
+        projectImages.forEach((image, idx) => {
+          gsap.set(image, {
+            opacity: idx === i ? 1 : 0,
+            scale: 1,
+            pointerEvents: "none",
+          });
+        });
+
+        projectDots.forEach((dot, idx) => {
           gsap.set(dot, {
             backgroundColor:
-              i === index
+              idx === i
                 ? "rgba(255, 90, 60, 0.95)"
                 : "rgba(255, 255, 255, 0.15)",
           });
         });
       };
 
-      const updateStoryProgress = (step: number) => {
-        const clamped = Math.max(0, Math.min(TOTAL_STEPS - 1, step));
+      const hideHero = () => {
+        heroCopies.forEach((el) =>
+          gsap.set(el, { opacity: 0, pointerEvents: "none" }),
+        );
+        if (heroMedia) gsap.set(heroMedia, { opacity: 0 });
+      };
 
-        if (clamped < 1) {
-          const t = clamped;
-          gsap.set(heroCopies.first, { opacity: 1 - t, y: 0 });
-          gsap.set(heroCopies.second, { opacity: t, y: 0 });
-          gsap.set(heroCopies.metrics, { opacity: 0, y: 12 });
-          setHeroPortraits({ first: 1 - t, second: t, front: 0 });
-          scrubHeroVideo(clamped);
-          gsap.set(heroMedia, { opacity: 1 });
-          gsap.set(workPanel, { opacity: 0, pointerEvents: "none" });
-          gsap.set(workMedia, { opacity: 0 });
-          setActiveSection("hero");
-        } else if (clamped < 2) {
-          const t = clamped - 1;
-          gsap.set(heroCopies.first, { opacity: 0, y: 0 });
-          gsap.set(heroCopies.second, { opacity: 1 - t, y: 0 });
-          gsap.set(heroCopies.metrics, { opacity: t, y: (1 - t) * 12 });
-          setHeroPortraits({ first: 0, second: 1 - t, front: t });
-          scrubHeroVideo(clamped);
-          gsap.set(heroMedia, { opacity: 1 });
-          gsap.set(workPanel, { opacity: 0, pointerEvents: "none" });
-          gsap.set(workMedia, { opacity: 0 });
-          setActiveSection("hero");
-        } else if (clamped < 3) {
-          const t = clamped - 2;
-          gsap.set(heroCopies.first, { opacity: 0, y: 0 });
-          gsap.set(heroCopies.second, { opacity: 0, y: 0 });
-          gsap.set(heroCopies.metrics, { opacity: 1 - t, y: t * -12 });
-          setHeroPortraits({ first: 0, second: 0, front: 1 - t * 0.35 });
-          scrubHeroVideo(clamped);
-          gsap.set(heroMedia, { opacity: 1 - t });
-          gsap.set(workPanel, { opacity: t, pointerEvents: t > 0.5 ? "auto" : "none" });
-          gsap.set(workMedia, { opacity: t });
-          setActiveProject(0, 0);
-          setActiveSection(t > 0.6 ? "work" : "hero");
-        } else {
-          const workStep = clamped - 3;
-          const projectIndex = Math.min(
-            WORK_STEP_COUNT - 1,
-            Math.floor(workStep),
-          );
-          const blend = workStep - projectIndex;
-
-          gsap.set(heroCopies.first, { opacity: 0 });
-          gsap.set(heroCopies.second, { opacity: 0 });
-          gsap.set(heroCopies.metrics, { opacity: 0 });
-          gsap.set(heroMedia, { opacity: 0 });
+      const showWork = () => {
+        if (workPanel)
           gsap.set(workPanel, { opacity: 1, pointerEvents: "auto" });
-          gsap.set(workMedia, { opacity: 1 });
-          setActiveProject(projectIndex, blend);
+        if (workMedia) gsap.set(workMedia, { opacity: 1 });
+      };
+
+      const hideWork = () => {
+        if (workPanel)
+          gsap.set(workPanel, { opacity: 0, pointerEvents: "none" });
+        if (workMedia) gsap.set(workMedia, { opacity: 0 });
+      };
+
+      /**
+       * Story scroll step 0–8:
+       * 0–2 = hero states (video 0→1)
+       * 2–3 = hero→work handoff
+       * 3–8 = work projects 0–5
+       */
+      const updateStoryProgress = (step: number) => {
+        const clamped = gsap.utils.clamp(0, TOTAL_STEPS - 1, step);
+
+        if (clamped < HERO_STEP_COUNT) {
+          const heroPos = clamped;
+          setHeroCopy(heroPos);
+          setHeroPortraits(heroPos);
+          scrubHeroVideo(heroPos);
+          if (heroMedia) gsap.set(heroMedia, { opacity: 1 });
+          hideWork();
+          setActiveSection("hero");
+        } else {
+          hideHero();
+          showWork();
+          scrubHeroVideo(HERO_STEP_COUNT - 1);
+          const workPos = clamped - HERO_STEP_COUNT;
+          const projectIndex = Math.round(workPos);
+          setActiveProject(projectIndex);
           setActiveSection("work");
         }
       };
 
-      const storySnap = reduced
-        ? undefined
-        : {
-            snapTo: STORY_SNAP_INCREMENT,
-            duration: { min: 0.25, max: 0.55 },
-            delay: 0.1,
-            ease: "power2.inOut",
-            directional: true,
-          };
+      let storyScrollCreated = false;
 
-      const storyScrollBase = {
-        trigger: story,
-        start: "top top",
-        pin,
-        pinSpacing: true,
-        scrub: 0.8,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        ...(storySnap ? { snap: storySnap } : {}),
-        onUpdate: (self: ScrollTrigger) => {
-          const step = self.progress * (TOTAL_STEPS - 1);
-          updateStoryProgress(step);
-        },
+      const setupStoryScroll = () => {
+        if (destroyed || storyScrollCreated) return;
+        storyScrollCreated = true;
+
+        const snapToStep = (progress: number) => {
+          const step = Math.round(progress * (TOTAL_STEPS - 1));
+          return step / (TOTAL_STEPS - 1);
+        };
+
+        const storySnap = reduced
+          ? undefined
+          : {
+              snapTo: snapToStep,
+              duration: { min: 0.25, max: 0.45 },
+              delay: 0.08,
+              ease: "power2.out",
+              directional: true,
+            };
+
+        const scrollDistance = (TOTAL_STEPS - 1) * window.innerHeight;
+        const scrubValue = reduced || mobile ? 0.6 : 0.9;
+
+        ScrollTrigger.create({
+          id: reduced || mobile ? "story-scrub-mobile" : "story-scrub",
+          trigger: story,
+          start: "top top",
+          end: () =>
+            `+=${mobile && !reduced ? scrollDistance * 0.85 : scrollDistance}`,
+          pin,
+          pinSpacing: true,
+          scrub: scrubValue,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+          ...(storySnap ? { snap: storySnap } : {}),
+          onUpdate: (self) => {
+            const step = self.progress * (TOTAL_STEPS - 1);
+            updateStoryProgress(step);
+          },
+        });
       };
 
-      if (reduced || mobile) {
-        ScrollTrigger.create({
-          ...storyScrollBase,
-          id: "story-scrub-mobile",
-          end: () => `+=${(TOTAL_STEPS - 1) * window.innerHeight * 0.85}`,
-          scrub: 0.6,
-        });
-      } else {
-        ScrollTrigger.create({
-          ...storyScrollBase,
-          id: "story-scrub",
-          end: () => `+=${(TOTAL_STEPS - 1) * window.innerHeight}`,
-        });
+      if (heroVideo && !reduced && !mobile) {
+        const onMeta = () => {
+          if (destroyed) return;
+          videoScrubber = createHeroVideoScrubber(heroVideo);
+          heroVideo.pause();
+          ScrollTrigger.refresh();
+        };
+
+        const onError = () => {
+          heroVideo.setAttribute("data-failed", "true");
+        };
+
+        heroVideo.addEventListener("loadedmetadata", onMeta, { once: true });
+        heroVideo.addEventListener("error", onError, { once: true });
+        heroVideo.pause();
+
+        if (heroVideo.readyState >= 1) {
+          onMeta();
+        }
+
+        videoCleanup = () => {
+          heroVideo.removeEventListener("error", onError);
+          videoScrubber?.destroy();
+        };
       }
+
+      setupStoryScroll();
 
       const sections: Array<{
         el: HTMLElement | null;
@@ -327,7 +360,6 @@ export function usePortfolioScroll() {
       sections.forEach(({ el, id }) => {
         if (!el) return;
 
-        // Active nav tracking
         ScrollTrigger.create({
           trigger: el,
           start: "top 50%",
@@ -339,7 +371,6 @@ export function usePortfolioScroll() {
           },
         });
 
-        // Snap section to viewport start when scrolling into view
         if (!reduced) {
           ScrollTrigger.create({
             trigger: el,
@@ -347,9 +378,9 @@ export function usePortfolioScroll() {
             end: "top top",
             snap: {
               snapTo: 1,
-              duration: { min: 0.25, max: 0.5 },
+              duration: { min: 0.25, max: 0.45 },
               delay: 0.08,
-              ease: "power2.inOut",
+              ease: "power2.out",
               directional: true,
             },
           });
@@ -404,6 +435,7 @@ export function usePortfolioScroll() {
       }
 
       return () => {
+        destroyed = true;
         videoCleanup?.();
         clickHandlers.forEach(({ el, fn }) =>
           el.removeEventListener("click", fn),

@@ -29,65 +29,54 @@ export const StorySection = forwardRef<HTMLElement, StorySectionProps>(
           className="story-pin relative h-screen w-full bg-black"
         >
           <div className="grid h-full grid-cols-1 md:grid-cols-2">
+            {/* Left: stable copy stack — states swap inside one centred container */}
             <div className="relative z-10 flex min-h-0 flex-col justify-center px-6 pb-8 pt-28 md:px-12 md:pb-0 md:pt-24 lg:px-16 xl:px-20">
-              {/* Hero state 1 — Figma line breaks */}
-              <div
-                data-hero-copy={0}
-                className="hero-copy absolute inset-x-6 top-28 md:inset-x-12 md:top-1/2 md:-translate-y-1/2 lg:inset-x-16 xl:inset-x-20"
-                style={{ opacity: 1 }}
-              >
-                <HeroHeadlineOne />
-                <p className="hero-supporting mt-6 text-white/80">
-                  I&apos;m <span className="text-accent">Jac</span>, a Senior
-                  Product Designer with{" "}
-                  <span className="text-accent">15+ years&apos;</span> experience
-                  across e-commerce, fintech and ed-tech.
-                </p>
-              </div>
-
-              {/* Hero state 2 */}
-              <div
-                data-hero-copy={1}
-                className="hero-copy absolute inset-x-6 top-28 md:inset-x-12 md:top-1/2 md:-translate-y-1/2 lg:inset-x-16 xl:inset-x-20"
-                style={{ opacity: 0 }}
-              >
-                <h1 className="hero-heading-secondary text-white">
-                  <AccentText parts={HERO_STATES[1].headline} />
-                </h1>
-                <p className="hero-supporting mt-6 text-white/80">
-                  <AccentText parts={HERO_STATES[1].supporting} />
-                </p>
-              </div>
-
-              <div
-                data-hero-copy="metrics"
-                className="hero-copy absolute inset-x-6 top-28 md:inset-x-12 md:top-1/2 md:-translate-y-1/2 lg:inset-x-16 xl:inset-x-20"
-                style={{ opacity: 0 }}
-              >
-                <div className="space-y-8">
-                  {HERO_METRICS.map((metric) => (
-                    <div key={metric.value}>
-                      <p className="font-display text-[clamp(36px,3.5vw,56px)] leading-none text-white">
-                        {metric.value}
-                      </p>
-                      <p className="mt-2 text-[clamp(18px,1.6vw,24px)] leading-snug text-white/65">
-                        {metric.label}
-                      </p>
-                    </div>
-                  ))}
+              <div className="hero-copy-stack">
+                <div data-hero-copy={0} className="hero-copy-layer" style={{ opacity: 1 }}>
+                  <HeroHeadlineOne />
+                  <p className="hero-supporting mt-6 text-white/80">
+                    I&apos;m <span className="text-accent">Jac</span>, a Senior
+                    Product Designer with{" "}
+                    <span className="text-accent">15+ years&apos;</span> experience
+                    across e-commerce, fintech and ed-tech.
+                  </p>
                 </div>
-                <a
-                  href="#work"
-                  className="mt-10 inline-flex items-center gap-2 text-[clamp(18px,1.6vw,22px)] font-medium text-white transition-opacity hover:opacity-80"
-                >
-                  View portfolio website
-                  <ExternalArrow />
-                </a>
+
+                <div data-hero-copy={1} className="hero-copy-layer" style={{ opacity: 0 }}>
+                  <h1 className="hero-heading-secondary text-white">
+                    <AccentText parts={HERO_STATES[1].headline} />
+                  </h1>
+                  <p className="hero-supporting mt-6 text-white/80">
+                    <AccentText parts={HERO_STATES[1].supporting} />
+                  </p>
+                </div>
+
+                <div data-hero-copy="metrics" className="hero-copy-layer" style={{ opacity: 0 }}>
+                  <div className="space-y-8">
+                    {HERO_METRICS.map((metric) => (
+                      <div key={metric.value}>
+                        <p className="font-display text-[clamp(36px,3.5vw,56px)] leading-none text-white">
+                          {metric.value}
+                        </p>
+                        <p className="mt-2 text-[clamp(18px,1.6vw,24px)] leading-snug text-white/65">
+                          {metric.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <a
+                    href="#work"
+                    className="mt-10 inline-flex items-center gap-2 text-[clamp(18px,1.6vw,22px)] font-medium text-white transition-opacity hover:opacity-80"
+                  >
+                    View portfolio website
+                    <ExternalArrow />
+                  </a>
+                </div>
               </div>
 
               <div
                 data-work-panel
-                className="work-panel absolute inset-x-6 top-28 max-w-[800px] md:inset-x-12 md:top-1/2 md:-translate-y-1/2 lg:inset-x-16 xl:inset-x-20"
+                className="work-panel"
                 style={{ opacity: 0, pointerEvents: "none" }}
               >
                 <ul className="space-y-0.5 sm:space-y-1">
@@ -111,7 +100,7 @@ export const StorySection = forwardRef<HTMLElement, StorySectionProps>(
                       key={`${project.id}-detail`}
                       data-project-detail={index}
                       className="project-detail absolute inset-x-0 top-0 max-w-lg"
-                      style={{ opacity: 0 }}
+                      style={{ opacity: 0, pointerEvents: "none" }}
                     >
                       <p className="text-[clamp(17px,1.5vw,22px)] leading-relaxed text-white/75">
                         {project.description}
@@ -136,20 +125,21 @@ export const StorySection = forwardRef<HTMLElement, StorySectionProps>(
               </div>
             </div>
 
-            <div className="relative min-h-[40vh] md:min-h-0 md:h-full">
-              <HeroMedia className="absolute inset-0" useVideoScrub={useVideoScrub} />
+            {/* Right: stable hero media + work imagery */}
+            <div className="hero-media-column relative min-h-[40vh] md:min-h-0 md:h-full">
+              <HeroMedia useVideoScrub={useVideoScrub} />
 
               <div
                 data-work-media
-                className="absolute inset-0 overflow-hidden"
-                style={{ opacity: 0 }}
+                className="work-media-panel absolute inset-0 overflow-hidden"
+                style={{ opacity: 0, pointerEvents: "none" }}
               >
                 {PROJECTS.map((project, index) => (
                   <div
                     key={project.id}
                     data-project-image={index}
                     className="absolute inset-0 flex items-center justify-center bg-black p-4 sm:p-8"
-                    style={{ opacity: 0 }}
+                    style={{ opacity: 0, pointerEvents: "none" }}
                   >
                     <div className="relative h-full w-full">
                       <Image
@@ -157,7 +147,7 @@ export const StorySection = forwardRef<HTMLElement, StorySectionProps>(
                         alt={project.alt}
                         fill
                         loading={index < 2 ? "eager" : "lazy"}
-                        sizes="(max-width: 768px) 100vw, 50vw"
+                        sizes="(max-width: 768px) 100vw, 52vw"
                         className="object-contain object-center"
                       />
                     </div>
