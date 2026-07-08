@@ -74,8 +74,8 @@ export const PROJECTS = [
     description:
       "AI-assisted shopping lists that turn real-world intent into faster, more relevant grocery planning.",
     metric: "6/7 ease-of-use score",
-    image: "/media/work/shopping-lists.jpg",
-    alt: "Waitrose shopping lists tablet interface",
+    image: "/media/work/Feature-img_Lists.png",
+    alt: "Shopping Lists — Waitrose flat-lay iPad shopping list interface",
     panelColor: "#D4147A",
   },
   {
@@ -84,8 +84,8 @@ export const PROJECTS = [
     description:
       "A repeat-purchase experience designed to help customers rebuild their regular shop with less effort.",
     metric: "5m 06s faster repeat-purchase journey",
-    image: "/media/work/quick-shop.jpg",
-    alt: "Quick Shop mobile interface",
+    image: "/media/work/Feature-img_QuickShop.png",
+    alt: "Quick Shop — hand holding Waitrose mobile app on lime green background",
     panelColor: "#C8D82D",
   },
   {
@@ -94,8 +94,8 @@ export const PROJECTS = [
     description:
       "A simplified account strategy that reduced delivery complexity while unlocking customer value faster.",
     metric: "50%+ effort reduction",
-    image: "/media/work/cellar.jpg",
-    alt: "Waitrose Cellar wine glass visual",
+    image: "/media/work/Feature-img_Cellar.png",
+    alt: "Cellar — burgundy wine glass with wine pour",
     panelColor: "#5C1538",
   },
   {
@@ -104,8 +104,8 @@ export const PROJECTS = [
     description:
       "High-trust fintech journeys designed to make complex IPO investing clearer, safer and easier to complete.",
     metric: "4 high-trust journeys redesigned",
-    image: "/media/work/primarybid.jpg",
-    alt: "PrimaryBid sign up mobile journey",
+    image: "/media/work/Feature-img_PrimaryBid.png",
+    alt: "PrimaryBid — hand holding phone with sign-up screen on gradient background",
     panelColor: "#3B4FA8",
   },
   {
@@ -114,8 +114,8 @@ export const PROJECTS = [
     description:
       "A mobile learning experience shaped around motivation, progress and long-term language retention.",
     metric: "NPS 62",
-    image: "/media/work/kaizen-languages.jpg",
-    alt: "Kaizen Languages lessons screen",
+    image: "/media/work/Feature-img_Kaizen.png",
+    alt: "Kaizen Languages — Spanish lessons app on purple background",
     panelColor: "#2E1A6E",
   },
   {
@@ -124,8 +124,8 @@ export const PROJECTS = [
     description:
       "A connected smart-home app experience across iKettle, Smarter Coffee and FridgeCam.",
     metric: "3 connected products supported",
-    image: "/media/work/smarter.jpg",
-    alt: "Smarter FridgeCam and mobile app",
+    image: "/media/work/Feature-img_Smarter.png",
+    alt: "Smarter — FridgeCam and fridge interior app on light grey background",
     panelColor: "#E8E8E8",
   },
 ] as const;
