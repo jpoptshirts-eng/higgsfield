@@ -2,20 +2,23 @@
 
 import { ApproachSection } from "@/components/ApproachSection";
 import { ContactSection } from "@/components/ContactSection";
+import { HeroSection } from "@/components/HeroSection";
 import { Navigation } from "@/components/Navigation";
 import { ResultsSection } from "@/components/ResultsSection";
-import { StorySection } from "@/components/StorySection";
+import { WorkSection } from "@/components/WorkSection";
 import { usePortfolioScroll } from "@/hooks/usePortfolioScroll";
 
 export function PortfolioPage() {
   const {
-    storyRef,
+    heroRef,
+    workRef,
     approachRef,
     resultsRef,
     contactRef,
+    heroFrameRef,
     activeSection,
     reducedMotion,
-    useVideoScrub,
+    useFrameSequence,
     handleNavigate,
   } = usePortfolioScroll();
 
@@ -24,11 +27,13 @@ export function PortfolioPage() {
       <Navigation activeSection={activeSection} onNavigate={handleNavigate} />
 
       <main className="bg-black text-white">
-        <StorySection
-          ref={storyRef}
+        <HeroSection
+          ref={heroRef}
           reducedMotion={reducedMotion}
-          useVideoScrub={useVideoScrub}
+          useFrameSequence={useFrameSequence}
+          frameSequenceRef={heroFrameRef}
         />
+        <WorkSection ref={workRef} />
         <ApproachSection ref={approachRef} />
         <ResultsSection ref={resultsRef} />
         <ContactSection ref={contactRef} />

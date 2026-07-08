@@ -4,13 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type { HeroFrameSequenceHandle } from "@/components/HeroFrameSequence";
 import type { NavId } from "@/data/site";
 import { PROJECTS } from "@/data/site";
-import { createHeroVideoScrubber } from "@/hooks/heroVideoScrub";
 
-const HERO_STEP_COUNT = 3;
 const WORK_STEP_COUNT = PROJECTS.length;
-const TOTAL_STEPS = HERO_STEP_COUNT + WORK_STEP_COUNT;
+const HERO_SNAP_POINTS = [0, 0.5, 1];
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
@@ -30,50 +29,52 @@ function getHeroCopyEls(root: HTMLElement) {
   ].filter(Boolean) as HTMLElement[];
 }
 
-function scrollToStoryStep(
-  step: number,
-  behavior: ScrollBehavior = "smooth",
-) {
-  const storyTrigger =
-    ScrollTrigger.getById("story-scrub") ??
-    ScrollTrigger.getById("story-scrub-mobile");
-  if (!storyTrigger) return;
-
-  const clamped = Math.max(0, Math.min(TOTAL_STEPS - 1, step));
-  const progress = clamped / (TOTAL_STEPS - 1);
-  const target =
-    storyTrigger.start +
-    (storyTrigger.end - storyTrigger.start) * progress;
-
-  window.scrollTo({ top: target, behavior });
+function isNearHeroSnap(progress: number): boolean {
+  return HERO_SNAP_POINTS.some((point) => Math.abs(progress - point) < 0.03);
 }
 
-/** Opacity for hero copy index i at fractional hero position 0–2 */
-function heroCopyOpacity(i: number, heroPos: number): number {
+function heroCopyOpacity(i: number, progress: number): number {
+  const heroPos = progress * 2;
   return Math.max(0, 1 - Math.abs(heroPos - i));
 }
 
+function activeHeroIndex(progress: number): number {
+  if (progress < 0.33) return 0;
+  if (progress < 0.66) return 1;
+  return 2;
+}
+
 export function usePortfolioScroll() {
-  const storyRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const workRef = useRef<HTMLElement>(null);
   const approachRef = useRef<HTMLElement>(null);
   const resultsRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
+  const heroFrameRef = useRef<HeroFrameSequenceHandle>(null);
 
   const [activeSection, setActiveSection] = useState<NavId | "hero">("hero");
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [useVideoScrub, setUseVideoScrub] = useState(false);
+  const [useFrameSequence, setUseFrameSequence] = useState(false);
 
   const handleNavigate = useCallback(
     (id: NavId | "top") => {
-      const behavior = reducedMotion ? "auto" : ("smooth" as ScrollBehavior);
-
       if (id === "top") {
-        window.scrollTo({ top: 0, behavior });
+        window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
         return;
       }
 
       if (id === "work") {
-        scrollToStoryStep(HERO_STEP_COUNT, behavior);
+        const workTrigger = ScrollTrigger.getById("work-scrub");
+        if (!workTrigger) return;
+        if (reducedMotion) {
+          window.scrollTo({ top: workTrigger.start, behavior: "auto" });
+          return;
+        }
+        gsap.to(window, {
+          scrollTo: { y: workTrigger.start, autoKill: true },
+          duration: 0.85,
+          ease: "power2.inOut",
+        });
         return;
       }
 
@@ -100,24 +101,24 @@ export function usePortfolioScroll() {
     const reduced = prefersReducedMotion();
     const mobile = isMobile();
     setReducedMotion(reduced);
-    setUseVideoScrub(!reduced && !mobile);
+    setUseFrameSequence(!reduced && !mobile);
 
-    const story = storyRef.current;
-    const pin = story?.querySelector<HTMLElement>("[data-story-pin]");
-    if (!story || !pin) return;
+    const hero = heroRef.current;
+    const heroPin = hero?.querySelector<HTMLElement>("[data-hero-pin]");
+    const work = workRef.current;
+    const workPin = work?.querySelector<HTMLElement>("[data-work-pin]");
+    if (!hero || !heroPin || !work || !workPin) return;
 
     let destroyed = false;
 
     const ctx = gsap.context(() => {
-      const heroCopies = getHeroCopyEls(pin);
-      const heroImage0 = pin.querySelector<HTMLElement>('[data-hero-image="0"]');
-      const heroImage1 = pin.querySelector<HTMLElement>('[data-hero-image="1"]');
-      const heroImageFront = pin.querySelector<HTMLElement>(
+      const heroCopies = getHeroCopyEls(heroPin);
+      const heroImage0 = heroPin.querySelector<HTMLElement>('[data-hero-image="0"]');
+      const heroImage1 = heroPin.querySelector<HTMLElement>('[data-hero-image="1"]');
+      const heroImageFront = heroPin.querySelector<HTMLElement>(
         '[data-hero-image="front"]',
       );
-      const heroMedia = pin.querySelector<HTMLElement>("[data-hero-media]");
-      const workPanel = pin.querySelector<HTMLElement>("[data-work-panel]");
-      const workMedia = pin.querySelector<HTMLElement>("[data-work-media]");
+
       const projectTitles = gsap.utils.toArray<HTMLElement>("[data-project-label]");
       const projectDetails = gsap.utils.toArray<HTMLElement>(
         "[data-project-detail]",
@@ -126,41 +127,45 @@ export function usePortfolioScroll() {
         "[data-project-image]",
       );
       const projectDots = gsap.utils.toArray<HTMLElement>("[data-project-dot]");
-
       const projectTriggers = gsap.utils.toArray<HTMLButtonElement>(
         "[data-project-trigger]",
       );
 
       const clickHandlers: Array<{ el: HTMLButtonElement; fn: () => void }> = [];
 
+      const scrollToWorkProject = (index: number) => {
+        const workTrigger = ScrollTrigger.getById("work-scrub");
+        if (!workTrigger) return;
+
+        const progress = index / (WORK_STEP_COUNT - 1);
+        const target =
+          workTrigger.start +
+          (workTrigger.end - workTrigger.start) * progress;
+
+        if (reduced) {
+          window.scrollTo({ top: target, behavior: "auto" });
+          return;
+        }
+
+        gsap.to(window, {
+          scrollTo: { y: target, autoKill: true },
+          duration: 0.85,
+          ease: "power2.inOut",
+        });
+      };
+
       projectTriggers.forEach((trigger, index) => {
-        const fn = () => {
-          scrollToStoryStep(
-            HERO_STEP_COUNT + index,
-            reduced ? "auto" : "smooth",
-          );
-        };
+        const fn = () => scrollToWorkProject(index);
         trigger.addEventListener("click", fn);
         clickHandlers.push({ el: trigger, fn });
       });
 
-      const heroVideo = pin.querySelector<HTMLVideoElement>("[data-hero-video]");
-      let videoScrubber: ReturnType<typeof createHeroVideoScrubber> | null =
-        null;
-      let videoCleanup: (() => void) | undefined;
+      const frameSequenceActive = !reduced && !mobile;
 
-      const isVideoScrubActive = () =>
-        !reduced &&
-        !mobile &&
-        !!heroVideo &&
-        !heroVideo.hasAttribute("data-failed") &&
-        Number.isFinite(heroVideo.duration) &&
-        heroVideo.duration > 0 &&
-        !!videoScrubber;
+      const setHeroPortraits = (progress: number) => {
+        if (frameSequenceActive) return;
 
-      const setHeroPortraits = (heroPos: number) => {
-        if (isVideoScrubActive()) return;
-
+        const heroPos = progress * 2;
         const opacities = [0, 0, 0];
         [0, 1, 2].forEach((i) => {
           opacities[i] = heroCopyOpacity(i, heroPos);
@@ -171,28 +176,29 @@ export function usePortfolioScroll() {
         if (heroImageFront) gsap.set(heroImageFront, { opacity: opacities[2] });
       };
 
-      const scrubHeroVideo = (heroPos: number) => {
-        if (!isVideoScrubActive() || !videoScrubber) return;
-        const progress = gsap.utils.clamp(
-          0,
-          1,
-          heroPos / (HERO_STEP_COUNT - 1),
-        );
-        videoScrubber.setProgress(progress);
-      };
-
-      const setHeroCopy = (heroPos: number) => {
-        const nearSnap = Math.abs(heroPos - Math.round(heroPos)) < 0.04;
-        const pos = nearSnap ? Math.round(heroPos) : heroPos;
+      const setHeroCopy = (progress: number) => {
+        const nearSnap = isNearHeroSnap(progress);
+        const active = activeHeroIndex(progress);
 
         heroCopies.forEach((el, i) => {
-          const opacity = nearSnap ? (i === pos ? 1 : 0) : heroCopyOpacity(i, pos);
+          const opacity = nearSnap
+            ? i === active
+              ? 1
+              : 0
+            : heroCopyOpacity(i, progress * 2);
           gsap.set(el, {
             opacity,
             y: 0,
             pointerEvents: opacity > 0.98 ? "auto" : "none",
           });
         });
+      };
+
+      const updateHero = (progress: number) => {
+        setHeroCopy(progress);
+        setHeroPortraits(progress);
+        heroFrameRef.current?.setProgress(progress);
+        setActiveSection("hero");
       };
 
       const setActiveProject = (index: number) => {
@@ -230,128 +236,59 @@ export function usePortfolioScroll() {
         });
       };
 
-      const hideHero = () => {
-        heroCopies.forEach((el) =>
-          gsap.set(el, { opacity: 0, pointerEvents: "none" }),
-        );
-        if (heroMedia) gsap.set(heroMedia, { opacity: 0 });
-      };
+      const heroSnap = reduced
+        ? undefined
+        : {
+            snapTo: HERO_SNAP_POINTS,
+            duration: { min: 0.25, max: 0.45 },
+            delay: 0.08,
+            ease: "power2.out",
+            directional: true,
+          };
 
-      const showWork = () => {
-        if (workPanel)
-          gsap.set(workPanel, { opacity: 1, pointerEvents: "auto" });
-        if (workMedia) gsap.set(workMedia, { opacity: 1 });
-      };
+      ScrollTrigger.create({
+        id: "hero-scrub",
+        trigger: hero,
+        start: "top top",
+        end: "+=300%",
+        pin: heroPin,
+        pinSpacing: true,
+        scrub: reduced || mobile ? 0.6 : 0.8,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        ...(heroSnap ? { snap: heroSnap } : {}),
+        onUpdate: (self) => updateHero(self.progress),
+      });
 
-      const hideWork = () => {
-        if (workPanel)
-          gsap.set(workPanel, { opacity: 0, pointerEvents: "none" });
-        if (workMedia) gsap.set(workMedia, { opacity: 0 });
-      };
+      const workSnap = reduced
+        ? undefined
+        : {
+            snapTo: 1 / (WORK_STEP_COUNT - 1),
+            duration: { min: 0.2, max: 0.4 },
+            delay: 0.06,
+            ease: "power2.out",
+            directional: true,
+          };
 
-      /**
-       * Story scroll step 0–8:
-       * 0–2 = hero states (video 0→1)
-       * 2–3 = hero→work handoff
-       * 3–8 = work projects 0–5
-       */
-      const updateStoryProgress = (step: number) => {
-        const clamped = gsap.utils.clamp(0, TOTAL_STEPS - 1, step);
-
-        if (clamped < HERO_STEP_COUNT) {
-          const heroPos = clamped;
-          setHeroCopy(heroPos);
-          setHeroPortraits(heroPos);
-          scrubHeroVideo(heroPos);
-          if (heroMedia) gsap.set(heroMedia, { opacity: 1 });
-          hideWork();
-          setActiveSection("hero");
-        } else {
-          hideHero();
-          showWork();
-          scrubHeroVideo(HERO_STEP_COUNT - 1);
-          const workPos = clamped - HERO_STEP_COUNT;
-          const projectIndex = Math.round(workPos);
-          setActiveProject(projectIndex);
+      ScrollTrigger.create({
+        id: "work-scrub",
+        trigger: work,
+        start: "top top",
+        end: () => `+=${(WORK_STEP_COUNT - 1) * window.innerHeight}`,
+        pin: workPin,
+        pinSpacing: true,
+        scrub: reduced || mobile ? 0.6 : 0.8,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        ...(workSnap ? { snap: workSnap } : {}),
+        onUpdate: (self) => {
+          const index = Math.round(self.progress * (WORK_STEP_COUNT - 1));
+          setActiveProject(index);
           setActiveSection("work");
-        }
-      };
+        },
+      });
 
-      let storyScrollCreated = false;
-
-      const setupStoryScroll = () => {
-        if (destroyed || storyScrollCreated) return;
-        storyScrollCreated = true;
-
-        const snapToStep = (progress: number) => {
-          const step = Math.round(progress * (TOTAL_STEPS - 1));
-          return step / (TOTAL_STEPS - 1);
-        };
-
-        const storySnap = reduced
-          ? undefined
-          : {
-              snapTo: snapToStep,
-              duration: { min: 0.25, max: 0.45 },
-              delay: 0.08,
-              ease: "power2.out",
-              directional: true,
-            };
-
-        const scrollDistance = (TOTAL_STEPS - 1) * window.innerHeight;
-        const scrubValue = reduced || mobile ? 0.6 : 0.9;
-
-        ScrollTrigger.create({
-          id: reduced || mobile ? "story-scrub-mobile" : "story-scrub",
-          trigger: story,
-          start: "top top",
-          end: () =>
-            `+=${mobile && !reduced ? scrollDistance * 0.85 : scrollDistance}`,
-          pin,
-          pinSpacing: true,
-          scrub: scrubValue,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          ...(storySnap ? { snap: storySnap } : {}),
-          onUpdate: (self) => {
-            const step = self.progress * (TOTAL_STEPS - 1);
-            updateStoryProgress(step);
-          },
-        });
-      };
-
-      if (heroVideo && !reduced && !mobile) {
-        const onMeta = () => {
-          if (destroyed) return;
-          videoScrubber = createHeroVideoScrubber(heroVideo);
-          heroVideo.pause();
-          ScrollTrigger.refresh();
-        };
-
-        const onError = () => {
-          heroVideo.setAttribute("data-failed", "true");
-        };
-
-        heroVideo.addEventListener("loadedmetadata", onMeta, { once: true });
-        heroVideo.addEventListener("error", onError, { once: true });
-        heroVideo.pause();
-
-        if (heroVideo.readyState >= 1) {
-          onMeta();
-        }
-
-        videoCleanup = () => {
-          heroVideo.removeEventListener("error", onError);
-          videoScrubber?.destroy();
-        };
-      }
-
-      setupStoryScroll();
-
-      const sections: Array<{
-        el: HTMLElement | null;
-        id: NavId;
-      }> = [
+      const sections: Array<{ el: HTMLElement | null; id: NavId }> = [
         { el: approachRef.current, id: "approach" },
         { el: resultsRef.current, id: "results" },
         { el: contactRef.current, id: "contact" },
@@ -367,7 +304,7 @@ export function usePortfolioScroll() {
           onEnter: () => setActiveSection(id),
           onEnterBack: () => setActiveSection(id),
           onLeaveBack: () => {
-            if (!reduced && !mobile) setActiveSection("work");
+            if (!reduced) setActiveSection("work");
           },
         });
 
@@ -434,14 +371,16 @@ export function usePortfolioScroll() {
         });
       }
 
+      updateHero(0);
+      setActiveProject(0);
+
       return () => {
         destroyed = true;
-        videoCleanup?.();
         clickHandlers.forEach(({ el, fn }) =>
           el.removeEventListener("click", fn),
         );
       };
-    }, story);
+    });
 
     const onResize = () => ScrollTrigger.refresh();
     window.addEventListener("resize", onResize);
@@ -453,7 +392,7 @@ export function usePortfolioScroll() {
     };
     motionQuery.addEventListener("change", onMotionChange);
 
-    const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 800);
+    const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 1000);
 
     return () => {
       window.removeEventListener("resize", onResize);
@@ -464,13 +403,15 @@ export function usePortfolioScroll() {
   }, []);
 
   return {
-    storyRef,
+    heroRef,
+    workRef,
     approachRef,
     resultsRef,
     contactRef,
+    heroFrameRef,
     activeSection,
     reducedMotion,
-    useVideoScrub,
+    useFrameSequence,
     handleNavigate,
   };
 }

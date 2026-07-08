@@ -45,15 +45,17 @@ h3,
 /* Figma-scale typography */
 .hero-heading {
   font-family: var(--font-display);
-  font-size: clamp(64px, 6.7vw, 96px);
+  font-size: clamp(64px, 6.6vw, 96px);
   line-height: 0.86;
   letter-spacing: 0;
   font-weight: 400;
 }
 
+.hero-subcopy,
 .hero-supporting {
-  font-size: clamp(22px, 2.2vw, 32px);
-  line-height: 1.3;
+  margin-top: clamp(28px, 3vw, 44px);
+  font-size: clamp(22px, 2.1vw, 32px);
+  line-height: 1.25;
   max-width: 42rem;
 }
 
@@ -94,23 +96,20 @@ h3,
   letter-spacing: 0.01em;
 }
 
-/* Stable hero copy stack — one centred container, states layered inside */
+/* Hero layout — Figma-aligned stable positioning */
+.hero-copy {
+  position: absolute;
+  left: clamp(72px, 7vw, 140px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(760px, 52vw);
+  z-index: 5;
+}
+
 .hero-copy-stack {
   position: relative;
   width: 100%;
-  max-width: 800px;
-  min-height: 280px;
-}
-
-@media (min-width: 768px) {
-  .hero-copy-stack {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    transform: translateY(-50%);
-    min-height: 0;
-  }
+  min-height: 200px;
 }
 
 .hero-copy-layer {
@@ -119,44 +118,37 @@ h3,
   pointer-events: none;
 }
 
-/* Stable hero media — no layout animation during scroll */
-.hero-media-column {
-  position: relative;
-  overflow: hidden;
-  background: #000;
-}
-
 .hero-media {
   position: absolute;
   top: 0;
   right: 0;
-  width: 100%;
-  height: 100%;
+  width: 58vw;
+  height: 100vh;
   overflow: hidden;
-  pointer-events: none;
   background: #000;
+  pointer-events: none;
+  z-index: 1;
   transform: translateZ(0);
 }
 
-@media (min-width: 768px) {
-  .hero-media {
-    width: 52vw;
-    height: 100vh;
-  }
-}
-
-.hero-video {
+.hero-media canvas,
+.hero-media video,
+.hero-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 58% center;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  filter: none;
-  opacity: 1;
+  object-position: center right;
 }
 
-.hero-video--hidden {
+.hero-media-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.hero-media-canvas--hidden {
   visibility: hidden;
   position: absolute;
 }
@@ -167,16 +159,10 @@ h3,
   pointer-events: none;
 }
 
-.hero-media-gradient {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to left,
-    transparent,
-    transparent,
-    rgba(0, 0, 0, 0.55)
-  );
+.work-media-column {
+  position: relative;
+  overflow: hidden;
+  background: #000;
 }
 
 .work-media-panel {
@@ -186,17 +172,30 @@ h3,
 .work-panel {
   width: 100%;
   max-width: 800px;
-  padding-left: 0;
-  padding-right: 0;
+}
+
+@media (max-width: 767px) {
+  .hero-copy {
+    left: 1.5rem;
+    width: calc(100% - 3rem);
+    top: 42%;
+  }
+
+  .hero-media {
+    width: 100%;
+    height: 55vh;
+    top: auto;
+    bottom: 0;
+  }
 }
 
 @media (min-width: 768px) {
   .work-panel {
     position: absolute;
     top: 50%;
-    left: 0;
-    right: 0;
+    left: clamp(72px, 7vw, 140px);
     transform: translateY(-50%);
+    width: min(760px, 52vw);
   }
 }
 
@@ -205,7 +204,6 @@ h3,
 #results,
 #contact {
   scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 ::selection {
