@@ -76,6 +76,7 @@ export const PROJECTS = [
     metric: "6/7 ease-of-use score",
     image: "/media/work/shopping-lists.jpg",
     alt: "Waitrose shopping lists tablet interface",
+    panelColor: "#D4147A",
   },
   {
     id: "quick-shop",
@@ -85,6 +86,7 @@ export const PROJECTS = [
     metric: "5m 06s faster repeat-purchase journey",
     image: "/media/work/quick-shop.jpg",
     alt: "Quick Shop mobile interface",
+    panelColor: "#C8D82D",
   },
   {
     id: "cellar",
@@ -94,6 +96,7 @@ export const PROJECTS = [
     metric: "50%+ effort reduction",
     image: "/media/work/cellar.jpg",
     alt: "Waitrose Cellar wine glass visual",
+    panelColor: "#5C1538",
   },
   {
     id: "primarybid",
@@ -103,6 +106,7 @@ export const PROJECTS = [
     metric: "4 high-trust journeys redesigned",
     image: "/media/work/primarybid.jpg",
     alt: "PrimaryBid sign up mobile journey",
+    panelColor: "#3B4FA8",
   },
   {
     id: "kaizen",
@@ -112,6 +116,7 @@ export const PROJECTS = [
     metric: "NPS 62",
     image: "/media/work/kaizen-languages.jpg",
     alt: "Kaizen Languages lessons screen",
+    panelColor: "#2E1A6E",
   },
   {
     id: "smarter",
@@ -121,6 +126,7 @@ export const PROJECTS = [
     metric: "3 connected products supported",
     image: "/media/work/smarter.jpg",
     alt: "Smarter FridgeCam and mobile app",
+    panelColor: "#E8E8E8",
   },
 ] as const;
 

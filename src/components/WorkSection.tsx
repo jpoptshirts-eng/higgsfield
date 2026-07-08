@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { forwardRef } from "react";
 import { PROJECTS } from "@/data/site";
 import { ExternalArrow } from "@/components/ui/ExternalArrow";
@@ -19,7 +18,7 @@ export const WorkSection = forwardRef<HTMLElement>(function WorkSection(
     >
       <div
         data-work-pin
-        className="work-pin relative h-screen w-full overflow-hidden bg-black"
+        className="work-pin relative h-screen w-screen max-w-none overflow-hidden bg-black"
       >
         <div className="work-section">
           <div className="work-left relative z-10">
@@ -77,16 +76,18 @@ export const WorkSection = forwardRef<HTMLElement>(function WorkSection(
                   key={project.id}
                   data-project-image={index}
                   className="work-media-slide"
-                  style={{ opacity: index === 0 ? 1 : 0, pointerEvents: "none" }}
+                  style={{
+                    backgroundColor: project.panelColor,
+                    opacity: index === 0 ? 1 : 0,
+                    pointerEvents: "none",
+                  }}
                 >
-                  <Image
+                  <img
                     src={project.image}
                     alt={project.alt}
-                    fill
-                    priority={index === 0}
-                    quality={95}
-                    sizes="50vw"
                     className="work-media-image"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
                   />
                 </div>
               ))}
