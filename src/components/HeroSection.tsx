@@ -62,24 +62,44 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
                 data-hero-copy="metrics"
                 className="hero-state"
               >
-                <div className="space-y-8">
-                  {HERO_METRICS.map((metric) => (
-                    <div key={metric.value}>
-                      <p className="font-display text-[clamp(36px,3.5vw,56px)] leading-none text-white">
-                        {metric.value}
-                      </p>
-                      <p className="mt-2 text-[clamp(18px,1.6vw,24px)] leading-snug text-white/65">
-                        {metric.label}
-                      </p>
-                    </div>
-                  ))}
+                <div className="hero-proof-list">
+                  <div className="hero-proof-item">
+                    <p className="hero-proof-value">6/7</p>
+                    <p className="hero-proof-label">
+                      Ease-of-use score for Shopping Lists concept testing
+                    </p>
+                    <div className="hero-proof-divider" />
+                  </div>
+
+                  <div className="hero-proof-item">
+                    <p className="hero-proof-value">5m 06s faster</p>
+                    <p className="hero-proof-label">
+                      Quick Shop repeat-purchase journey, from sign-in to submitted order
+                    </p>
+                    <div className="hero-proof-divider" />
+                  </div>
+
+                  <div className="hero-proof-item">
+                    <p className="hero-proof-value">50%+</p>
+                    <p className="hero-proof-label">
+                      Reduction in estimated delivery effort for Waitrose Cellar account strategy
+                    </p>
+                    <div className="hero-proof-divider" />
+                  </div>
+
+                  <div className="hero-proof-item">
+                    <p className="hero-proof-value">NPS 62</p>
+                    <p className="hero-proof-label">
+                      Kaizen Languages learning experience shaped around motivation and retention
+                    </p>
+                  </div>
                 </div>
-                <a
-                  href="#work"
-                  className="mt-10 inline-flex items-center gap-2 text-[clamp(18px,1.6vw,22px)] font-medium text-white transition-opacity hover:opacity-80"
-                >
-                  View portfolio website
-                  <ExternalArrow />
+
+                <a href="#work" className="hero-proof-cta">
+                  <span>View portfolio website</span>
+                  <span className="arrow inline-block align-middle">
+                    <ExternalArrow />
+                  </span>
                 </a>
               </div>
             </div>
