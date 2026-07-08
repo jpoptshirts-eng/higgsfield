@@ -24,24 +24,35 @@ type HeroFrameSequenceProps = {
   enabled: boolean;
 };
 
-function drawCover(
+function drawImageContain(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
-  width: number,
-  height: number,
+  canvasWidth: number,
+  canvasHeight: number,
 ) {
   const iw = img.naturalWidth;
   const ih = img.naturalHeight;
   if (!iw || !ih) return;
 
-  const scale = Math.max(width / iw, height / ih);
-  const sw = iw * scale;
-  const sh = ih * scale;
-  const x = width - sw;
-  const y = (height - sh) / 2;
+  const imageRatio = iw / ih;
+  const canvasRatio = canvasWidth / canvasHeight;
 
-  ctx.clearRect(0, 0, width, height);
-  ctx.drawImage(img, x, y, sw, sh);
+  let drawWidth: number;
+  let drawHeight: number;
+
+  if (imageRatio > canvasRatio) {
+    drawWidth = canvasWidth;
+    drawHeight = canvasWidth / imageRatio;
+  } else {
+    drawHeight = canvasHeight;
+    drawWidth = canvasHeight * imageRatio;
+  }
+
+  const x = canvasWidth - drawWidth;
+  const y = (canvasHeight - drawHeight) / 2;
+
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  ctx.drawImage(img, x, y, drawWidth, drawHeight);
 }
 
 export const HeroFrameSequence = forwardRef<
@@ -50,11 +61,14 @@ export const HeroFrameSequence = forwardRef<
 >(function HeroFrameSequence({ enabled }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const layoutRef = useRef({ width: 0, height: 0 });
   const imagesRef = useRef<Map<number, HTMLImageElement>>(new Map());
   const targetFrameRef = useRef(10);
   const displayedFrameRef = useRef(10);
   const rafRef = useRef<number | null>(null);
   const progressRef = useRef(0);
+  const readyRef = useRef(false);
+  const failedRef = useRef(false);
 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -67,17 +81,19 @@ export const HeroFrameSequence = forwardRef<
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    drawCover(ctx, img, canvas.width, canvas.height);
+    const { width, height } = layoutRef.current;
+    drawImageContain(ctx, img, width, height);
     displayedFrameRef.current = frameNumber;
   };
 
   const tick = () => {
-    const target = targetFrameRef.current;
-    const current = displayedFrameRef.current;
-
-    if (current !== target) {
-      paint(target);
+    if (!readyRef.current || failedRef.current) {
+      rafRef.current = null;
+      return;
     }
+
+    const target = targetFrameRef.current;
+    if (displayedFrameRef.current !== target) paint(target);
 
     rafRef.current = null;
   };
@@ -94,6 +110,7 @@ export const HeroFrameSequence = forwardRef<
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const { width, height } = container.getBoundingClientRect();
+    layoutRef.current = { width, height };
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
     canvas.style.width = `${width}px`;
@@ -108,7 +125,11 @@ export const HeroFrameSequence = forwardRef<
   useImperativeHandle(ref, () => ({
     setProgress(progress: number) {
       progressRef.current = progress;
-      targetFrameRef.current = progressToFrameNumber(progress);
+      if (!readyRef.current || failedRef.current) return;
+
+      const next = progressToFrameNumber(progress);
+      if (next === targetFrameRef.current) return;
+      targetFrameRef.current = next;
       schedulePaint();
     },
   }));
@@ -123,9 +144,14 @@ export const HeroFrameSequence = forwardRef<
     const onLoad = () => {
       loaded += 1;
       if (!cancelled && loaded >= frames.length) {
+        readyRef.current = true;
         setReady(true);
         resizeCanvas();
-        paint(progressToFrameNumber(progressRef.current));
+        const startFrame = progressToFrameNumber(progressRef.current);
+        targetFrameRef.current = startFrame;
+        paint(startFrame);
+        // Let the scroll system know sizing is stable.
+        window.dispatchEvent(new Event("hero-frames-ready"));
       }
     };
 
@@ -135,7 +161,9 @@ export const HeroFrameSequence = forwardRef<
       img.src = heroFramePath(frameNumber);
       img.onload = onLoad;
       img.onerror = () => {
-        if (!cancelled) setFailed(true);
+        if (cancelled) return;
+        failedRef.current = true;
+        setFailed(true);
       };
       imagesRef.current.set(frameNumber, img);
     });
@@ -195,7 +223,7 @@ export const HeroFrameSequence = forwardRef<
               fill
               priority={index === 0}
               sizes="(max-width: 768px) 100vw, 58vw"
-              className={`object-cover object-center ${portrait.position}`}
+              className="object-contain object-right"
             />
           </div>
         ))}

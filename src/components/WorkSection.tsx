@@ -39,7 +39,7 @@ export const WorkSection = forwardRef<HTMLElement>(function WorkSection(
                 ))}
               </ul>
 
-              <div className="relative mt-8 min-h-[120px] max-w-lg">
+              <div className="relative mt-8 min-h-[140px] max-w-xl">
                 {PROJECTS.map((project, index) => (
                   <div
                     key={`${project.id}-detail`}
@@ -47,10 +47,10 @@ export const WorkSection = forwardRef<HTMLElement>(function WorkSection(
                     className="project-detail absolute inset-x-0 top-0 max-w-lg"
                     style={{ opacity: 0, pointerEvents: "none" }}
                   >
-                    <p className="text-[clamp(17px,1.5vw,22px)] leading-relaxed text-white/75">
+                    <p className="work-project-description leading-relaxed text-white/75">
                       {project.description}
                     </p>
-                    <p className="mt-4 text-[clamp(15px,1.3vw,18px)]">
+                    <p className="work-project-metric mt-4">
                       <span className="text-accent">Key metric: </span>
                       <span className="text-white/80">{project.metric}</span>
                     </p>
@@ -79,19 +79,18 @@ export const WorkSection = forwardRef<HTMLElement>(function WorkSection(
                 <div
                   key={project.id}
                   data-project-image={index}
-                  className="absolute inset-0 flex items-center justify-center bg-black p-4 sm:p-8"
+                  className="absolute inset-0 bg-black"
                   style={{ opacity: index === 0 ? 1 : 0, pointerEvents: "none" }}
                 >
-                  <div className="relative h-full w-full">
-                    <Image
-                      src={project.image}
-                      alt={project.alt}
-                      fill
-                      loading={index < 2 ? "eager" : "lazy"}
-                      sizes="(max-width: 768px) 100vw, 58vw"
-                      className="object-contain object-center"
-                    />
-                  </div>
+                  <Image
+                    src={project.image}
+                    alt={project.alt}
+                    fill
+                    loading={index < 2 ? "eager" : "lazy"}
+                    quality={95}
+                    sizes="50vw"
+                    className="object-cover object-center"
+                  />
                 </div>
               ))}
             </div>

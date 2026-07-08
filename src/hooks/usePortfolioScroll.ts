@@ -165,10 +165,9 @@ export function usePortfolioScroll() {
       const setHeroPortraits = (progress: number) => {
         if (frameSequenceActive) return;
 
-        const heroPos = progress * 2;
         const opacities = [0, 0, 0];
         [0, 1, 2].forEach((i) => {
-          opacities[i] = heroCopyOpacity(i, heroPos);
+          opacities[i] = heroCopyOpacity(i, progress);
         });
 
         if (heroImage0) gsap.set(heroImage0, { opacity: opacities[0] });
@@ -176,29 +175,26 @@ export function usePortfolioScroll() {
         if (heroImageFront) gsap.set(heroImageFront, { opacity: opacities[2] });
       };
 
-      const setHeroCopy = (progress: number) => {
-        const nearSnap = isNearHeroSnap(progress);
-        const active = activeHeroIndex(progress);
+      const activeHeroStateRef = { current: -1 };
+
+      const setHeroState = (progress: number) => {
+        const next = activeHeroIndex(progress);
+        if (next === activeHeroStateRef.current) return;
+        activeHeroStateRef.current = next;
 
         heroCopies.forEach((el, i) => {
-          const opacity = nearSnap
-            ? i === active
-              ? 1
-              : 0
-            : heroCopyOpacity(i, progress * 2);
-          gsap.set(el, {
-            opacity,
-            y: 0,
-            pointerEvents: opacity > 0.98 ? "auto" : "none",
-          });
+          el.classList.toggle("is-active", i === next);
         });
       };
 
       const updateHero = (progress: number) => {
-        setHeroCopy(progress);
+        setHeroState(progress);
         setHeroPortraits(progress);
         heroFrameRef.current?.setProgress(progress);
-        setActiveSection("hero");
+        if (activeSectionRef.current !== "hero") {
+          activeSectionRef.current = "hero";
+          setActiveSection("hero");
+        }
       };
 
       const setActiveProject = (index: number) => {
@@ -236,6 +232,8 @@ export function usePortfolioScroll() {
         });
       };
 
+      const activeSectionRef = { current: "hero" as NavId | "hero" };
+
       const heroSnap = reduced
         ? undefined
         : {
@@ -259,6 +257,12 @@ export function usePortfolioScroll() {
         ...(heroSnap ? { snap: heroSnap } : {}),
         onUpdate: (self) => updateHero(self.progress),
       });
+
+      const onHeroFramesReady = () => {
+        if (destroyed) return;
+        ScrollTrigger.refresh();
+      };
+      window.addEventListener("hero-frames-ready", onHeroFramesReady);
 
       const workSnap = reduced
         ? undefined
@@ -284,7 +288,10 @@ export function usePortfolioScroll() {
         onUpdate: (self) => {
           const index = Math.round(self.progress * (WORK_STEP_COUNT - 1));
           setActiveProject(index);
-          setActiveSection("work");
+          if (activeSectionRef.current !== "work") {
+            activeSectionRef.current = "work";
+            setActiveSection("work");
+          }
         },
       });
 
@@ -376,6 +383,7 @@ export function usePortfolioScroll() {
 
       return () => {
         destroyed = true;
+        window.removeEventListener("hero-frames-ready", onHeroFramesReady);
         clickHandlers.forEach(({ el, fn }) =>
           el.removeEventListener("click", fn),
         );

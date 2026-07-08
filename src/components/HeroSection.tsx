@@ -35,8 +35,7 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
             <div className="hero-copy-stack">
               <div
                 data-hero-copy={0}
-                className="hero-copy-layer"
-                style={{ opacity: 1 }}
+                className="hero-state is-active"
               >
                 <HeroHeadlineOne />
                 <p className="hero-subcopy text-white/80">
@@ -49,8 +48,7 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
 
               <div
                 data-hero-copy={1}
-                className="hero-copy-layer"
-                style={{ opacity: 0 }}
+                className="hero-state"
               >
                 <h1 className="hero-heading-secondary text-white">
                   <AccentText parts={HERO_STATES[1].headline} />
@@ -62,8 +60,7 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
 
               <div
                 data-hero-copy="metrics"
-                className="hero-copy-layer"
-                style={{ opacity: 0 }}
+                className="hero-state"
               >
                 <div className="space-y-8">
                   {HERO_METRICS.map((metric) => (
