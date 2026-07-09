@@ -15,14 +15,14 @@ export const ContactSection = forwardRef<HTMLElement>(function ContactSection(
     <section
       ref={ref}
       id="contact"
-      className="relative min-h-screen snap-start bg-black"
+      className="contactSection bg-black"
     >
       <div className="grid min-h-screen grid-cols-1 md:grid-cols-2">
         <div className="flex flex-col justify-center px-6 py-28 md:px-12 lg:px-16 xl:px-20">
           <div data-contact-content className="max-w-[800px]">
             <h2 className="contact-heading text-white">
               <span className="block">
-                Let&apos;s <span className="text-accent-pink">build</span>{" "}
+                Let&apos;s <span className="text-accent">build</span>{" "}
                 something
               </span>
               <span className="block">
@@ -39,10 +39,19 @@ export const ContactSection = forwardRef<HTMLElement>(function ContactSection(
                 <li key={link.label} className="flex items-center gap-8">
                   <a
                     href={link.href}
-                    className="nav-link inline-flex items-center gap-1.5 font-body font-medium text-white transition-opacity hover:opacity-80"
+                    className="nav-link contact-link inline-flex items-center gap-2 font-body font-medium text-white transition-colors"
+                    {...(link.external
+                      ? {
+                          target: "_blank",
+                          rel: "noopener noreferrer",
+                        }
+                      : {})}
+                    {...("download" in link && link.download
+                      ? { download: link.download }
+                      : {})}
                   >
                     {link.label}
-                    <ExternalArrow className="text-sm" />
+                    <ExternalArrow className="contact-link-arrow" />
                   </a>
                   {index < CONTACT_LINKS.length - 1 && (
                     <span

@@ -67,6 +67,8 @@ export const HERO_METRICS = [
   },
 ] as const;
 
+export const WORK_IMAGE_VERSION = 1;
+
 export const PROJECTS = [
   {
     id: "shopping-lists",
@@ -74,9 +76,10 @@ export const PROJECTS = [
     description:
       "AI-assisted shopping lists that turn real-world intent into faster, more relevant grocery planning.",
     metric: "6/7 ease-of-use score",
-    image: "/media/work/Feature-img_Lists.png",
+    image: `/images/work-img_Lists.jpg?v=${WORK_IMAGE_VERSION}`,
     alt: "Shopping Lists — Waitrose flat-lay iPad shopping list interface",
     panelColor: "#D4147A",
+    caseStudyUrl: "https://www.jacinto.website/work/shopping-lists",
   },
   {
     id: "quick-shop",
@@ -84,9 +87,10 @@ export const PROJECTS = [
     description:
       "A repeat-purchase experience designed to help customers rebuild their regular shop with less effort.",
     metric: "5m 06s faster repeat-purchase journey",
-    image: "/media/work/Feature-img_QuickShop.png",
+    image: `/images/work-img_QuickShop.jpg?v=${WORK_IMAGE_VERSION}`,
     alt: "Quick Shop — hand holding Waitrose mobile app on lime green background",
     panelColor: "#C8D82D",
+    caseStudyUrl: "https://www.jacinto.website/work/quickshop",
   },
   {
     id: "cellar",
@@ -94,9 +98,10 @@ export const PROJECTS = [
     description:
       "A simplified account strategy that reduced delivery complexity while unlocking customer value faster.",
     metric: "50%+ effort reduction",
-    image: "/media/work/Feature-img_Cellar.png",
+    image: `/images/work-img_Cellar.jpg?v=${WORK_IMAGE_VERSION}`,
     alt: "Cellar — burgundy wine glass with wine pour",
     panelColor: "#5C1538",
+    caseStudyUrl: "https://www.jacinto.website/work/cellar",
   },
   {
     id: "primarybid",
@@ -104,19 +109,21 @@ export const PROJECTS = [
     description:
       "High-trust fintech journeys designed to make complex IPO investing clearer, safer and easier to complete.",
     metric: "4 high-trust journeys redesigned",
-    image: "/media/work/Feature-img_PrimaryBid.png",
+    image: `/images/work-img_PrimaryBid.jpg?v=${WORK_IMAGE_VERSION}`,
     alt: "PrimaryBid — hand holding phone with sign-up screen on gradient background",
     panelColor: "#3B4FA8",
+    caseStudyUrl: "https://www.jacinto.website/work/primarybid",
   },
   {
     id: "kaizen",
-    title: "Kaizen Languages",
+    title: "Kaizen",
     description:
       "A mobile learning experience shaped around motivation, progress and long-term language retention.",
     metric: "NPS 62",
-    image: "/media/work/Feature-img_Kaizen.png",
+    image: `/images/work-img_Kaizen.jpg?v=${WORK_IMAGE_VERSION}`,
     alt: "Kaizen Languages — Spanish lessons app on purple background",
     panelColor: "#2E1A6E",
+    caseStudyUrl: "https://www.jacinto.website/work/kaizen-languages",
   },
   {
     id: "smarter",
@@ -124,9 +131,10 @@ export const PROJECTS = [
     description:
       "A connected smart-home app experience across iKettle, Smarter Coffee and FridgeCam.",
     metric: "3 connected products supported",
-    image: "/media/work/Feature-img_Smarter.png",
+    image: `/images/work-img_Smarter.jpg?v=${WORK_IMAGE_VERSION}`,
     alt: "Smarter — FridgeCam and fridge interior app on light grey background",
     panelColor: "#E8E8E8",
+    caseStudyUrl: "https://www.jacinto.website/work/smarter",
   },
 ] as const;
 
@@ -135,28 +143,28 @@ export const APPROACH_CARDS = [
     id: "behaviour-first",
     title: "Behaviour first",
     description:
-      "I start with real human behaviour — habits, decisions, workarounds and friction — then turn those insights into product opportunities.",
+      "I start with how people actually behave, not just what they say they want.",
     icon: "/images/approach/behaviour-first.png",
   },
   {
     id: "systems-thinking",
     title: "Systems thinking",
     description:
-      "I connect users, data, technology and business constraints to design solutions that work across the whole journey, not just one screen.",
+      "I connect the dots across users, data, technology and business constraints.",
     icon: "/images/approach/systems-thinking.png",
   },
   {
     id: "commercial-impact",
     title: "Commercial impact",
     description:
-      "I design with measurable outcomes in mind, whether that means improving adoption, reducing effort, increasing confidence or unlocking value faster.",
+      "I design for outcomes that create value for customers and the business.",
     icon: "/images/approach/commercial-impact.png",
   },
   {
     id: "prototype-invisible",
     title: "Prototype the invisible",
     description:
-      "I make ideas tangible early through prototypes and experiments, helping teams test assumptions, reduce risk and align before build.",
+      "I make unclear ideas tangible early, so teams can test, align and reduce risk.",
     icon: "/images/approach/prototype-invisible.png",
   },
 ] as const;
@@ -165,56 +173,58 @@ export const RESULTS = [
   {
     project: "Shopping Lists",
     impact:
-      "Turning real-world shopping intent into higher-value digital behaviour.",
-    chips: ["6/7 ease-of-use", "+72% order frequency", "+36% AOV"],
+      "I start with how people actually behave, not just what they say they want.",
+    metrics: ["6/7 ease-of-use", "+72% order frequency", "+36% AOV"],
   },
   {
     project: "Quick Shop",
     impact:
-      "Reducing repeat-shopping friction through faster, personalised regular shops.",
-    chips: ["25% faster completion", "5m 06s saved", "+19% items per basket"],
+      "Reducing repeat-shopping friction through behavioural personalisation",
+    metrics: ["25% faster completion", "5m 06s saved", "+19% items per basket"],
   },
   {
     project: "Cellar",
-    impact:
-      "Unlocking commercial value by simplifying account strategy and delivery effort.",
-    chips: ["£2m CRM opportunity", "50%+ effort reduction", "12+ months avoided"],
+    impact: "Unlocking commercial value by reframing the account strategy",
+    metrics: ["£2m CRM opportunity", "50%+ effort reduction", "12+ months avoided"],
   },
   {
     project: "PrimaryBid",
-    impact:
-      "Creating clearer, high-trust journeys for regulated investment products.",
-    chips: ["4 journeys redesigned", "Responsive T-Web", "Broker dashboard support"],
+    impact: "Creating foundations for a regulated transactional web platform",
+    metrics: ["4 journeys redesigned", "Responsive T-Web", "Broker dashboard support"],
   },
   {
     project: "Kaizen Languages",
-    impact:
-      "Improving learning motivation, retention and subscription performance.",
-    chips: ["NPS 62", "+35% retention", "+25% lesson completion"],
+    impact: "Improving learning, retention and subscription performance",
+    metrics: ["NPS 62", "+35% streak engagement", "+25% lesson completion"],
   },
   {
     project: "Smarter",
     impact:
-      "Designing one connected app ecosystem across physical smart-home products.",
-    chips: ["3 products supported", "iOS + Android", "Setup + recovery flows"],
+      "Designing one connected ecosystem across physical and digital products",
+    metrics: ["3 products supported", "iOS + Android", "Setup + recovery flows"],
   },
 ] as const;
 
 export const CONTACT_LINKS = [
   {
     label: "Email",
-    href: "mailto:jacinto@example.com",
+    href: "mailto:jjmatos@hotmail.com",
+    external: false,
   },
   {
     label: "LinkedIn",
-    href: "https://www.linkedin.com/in/jacintodematos",
+    href: "https://www.linkedin.com/in/jacinto-de-matos-00b303124/",
+    external: true,
   },
   {
-    label: "View portfolio website",
-    href: "#work",
+    label: "Case studies",
+    href: "https://www.jacinto.website/",
+    external: true,
   },
   {
-    label: "Download CV",
-    href: "/cv/jacinto-de-matos-cv.pdf",
+    label: "Resume",
+    href: "/cv/jacinto-de-matos-resume.pdf",
+    external: true,
+    download: "Jacinto-De-Matos-Resume.pdf",
   },
 ] as const;

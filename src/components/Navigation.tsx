@@ -29,7 +29,7 @@ export function Navigation({ activeSection, onNavigate }: NavigationProps) {
                 <button
                   type="button"
                   onClick={() => onNavigate(item.id)}
-                  className={`nav-link ${isActive ? "is-active" : ""}`}
+                  className={`nav-link transition-colors ${isActive ? "is-active" : ""}`}
                 >
                   {item.label}
                 </button>

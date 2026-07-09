@@ -33,8 +33,14 @@ export function getPreloadFrameNumbers(): number[] {
 
 /** Map hero scroll progress (0–1) to a frame number, skipping back-of-head. */
 export function progressToFrameNumber(progress: number): number {
+  const validFrames = getPreloadFrameNumbers();
   const p = Math.max(0, Math.min(1, progress));
   const points = HERO_FRAME_KEYPOINTS;
+
+  const indexOfFrame = (frame: number) => {
+    const idx = validFrames.indexOf(frame);
+    return idx >= 0 ? idx : 0;
+  };
 
   for (let i = 0; i < points.length - 1; i++) {
     const a = points[i];
@@ -42,8 +48,10 @@ export function progressToFrameNumber(progress: number): number {
     if (p >= a.progress && p <= b.progress) {
       const span = b.progress - a.progress || 1;
       const t = (p - a.progress) / span;
-      const frame = a.frame + t * (b.frame - a.frame);
-      return Math.round(frame);
+      const idxA = indexOfFrame(a.frame);
+      const idxB = indexOfFrame(b.frame);
+      const idx = Math.round(idxA + t * (idxB - idxA));
+      return validFrames[Math.max(0, Math.min(validFrames.length - 1, idx))];
     }
   }
 

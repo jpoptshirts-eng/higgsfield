@@ -17,6 +17,8 @@ export function PortfolioPage() {
     contactRef,
     heroFrameRef,
     activeSection,
+    activeProjectIndex,
+    heroStepIndex,
     reducedMotion,
     useFrameSequence,
     handleNavigate,
@@ -32,8 +34,12 @@ export function PortfolioPage() {
           reducedMotion={reducedMotion}
           useFrameSequence={useFrameSequence}
           frameSequenceRef={heroFrameRef}
+          heroStepIndex={heroStepIndex}
         />
-        <WorkSection ref={workRef} />
+        <WorkSection
+          ref={workRef}
+          activeProjectIndex={activeProjectIndex}
+        />
         <ApproachSection ref={approachRef} />
         <ResultsSection ref={resultsRef} />
         <ContactSection ref={contactRef} />

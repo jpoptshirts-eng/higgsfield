@@ -1,47 +1,52 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollToPlugin } from "gsap/ScrollToPlugin";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { HeroFrameSequenceHandle } from "@/components/HeroFrameSequence";
 import type { NavId } from "@/data/site";
 import { PROJECTS } from "@/data/site";
 
-const WORK_STEP_COUNT = PROJECTS.length;
-const HERO_SNAP_POINTS = [0, 0.5, 1];
+const SECTION_HERO = 0;
+const SECTION_WORK = 1;
+const SECTION_APPROACH = 2;
+const SECTION_RESULTS = 3;
+const SECTION_CONTACT = 4;
+
+const SECTION_COUNT = 5;
+const HERO_STEP_COUNT = 3;
+const WORK_PROJECT_COUNT = PROJECTS.length;
+const WORK_SCROLL_LOCK_MS = 750;
+const HERO_SCROLL_LOCK_MS = 1050;
+const WHEEL_DELTA_THRESHOLD = 20;
+const DESKTOP_MIN_WIDTH = 768;
+
+const SECTION_IDS = [
+  "hero",
+  "work",
+  "approach",
+  "results",
+  "contact",
+] as const;
+
+type SectionId = (typeof SECTION_IDS)[number];
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function isMobile(): boolean {
+function isDesktopViewport(): boolean {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(max-width: 767px)").matches;
+  return window.innerWidth >= DESKTOP_MIN_WIDTH;
 }
 
-function getHeroCopyEls(root: HTMLElement) {
-  return [
-    root.querySelector<HTMLElement>('[data-hero-copy="0"]'),
-    root.querySelector<HTMLElement>('[data-hero-copy="1"]'),
-    root.querySelector<HTMLElement>('[data-hero-copy="metrics"]'),
-  ].filter(Boolean) as HTMLElement[];
+function navIdFromIndex(index: number): NavId | "hero" {
+  const id = SECTION_IDS[index];
+  return id === "hero" ? "hero" : id;
 }
 
-function isNearHeroSnap(progress: number): boolean {
-  return HERO_SNAP_POINTS.some((point) => Math.abs(progress - point) < 0.03);
-}
-
-function heroCopyOpacity(i: number, progress: number): number {
-  const heroPos = progress * 2;
-  return Math.max(0, 1 - Math.abs(heroPos - i));
-}
-
-function activeHeroIndex(progress: number): number {
-  if (progress < 0.33) return 0;
-  if (progress < 0.66) return 1;
-  return 2;
+function heroStepToProgress(step: number): number {
+  if (HERO_STEP_COUNT <= 1) return 0;
+  return step / (HERO_STEP_COUNT - 1);
 }
 
 export function usePortfolioScroll() {
@@ -52,362 +57,281 @@ export function usePortfolioScroll() {
   const contactRef = useRef<HTMLElement>(null);
   const heroFrameRef = useRef<HeroFrameSequenceHandle>(null);
 
-  const [activeSection, setActiveSection] = useState<NavId | "hero">("hero");
+  const sectionRefs = useRef([
+    heroRef,
+    workRef,
+    approachRef,
+    resultsRef,
+    contactRef,
+  ]);
+
+  const [activeSectionIndex, setActiveSectionIndex] = useState(SECTION_HERO);
+  const [activeHeroStepIndex, setActiveHeroStepIndex] = useState(0);
+  const [activeWorkProjectIndex, setActiveWorkProjectIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [useFrameSequence, setUseFrameSequence] = useState(false);
+
+  const activeSectionIndexRef = useRef(SECTION_HERO);
+  const activeHeroStepIndexRef = useRef(0);
+  const activeWorkProjectIndexRef = useRef(0);
+  const scrollLockedRef = useRef(false);
+  const scrollLockTimerRef = useRef<number | null>(null);
+
+  const lockScroll = useCallback((duration = WORK_SCROLL_LOCK_MS) => {
+    scrollLockedRef.current = true;
+    if (scrollLockTimerRef.current !== null) {
+      window.clearTimeout(scrollLockTimerRef.current);
+    }
+    scrollLockTimerRef.current = window.setTimeout(() => {
+      scrollLockedRef.current = false;
+      scrollLockTimerRef.current = null;
+    }, duration);
+  }, []);
+
+  const applyHeroStep = useCallback(
+    (step: number, options?: { immediate?: boolean }) => {
+      const nextStep = Math.max(0, Math.min(HERO_STEP_COUNT - 1, step));
+      activeHeroStepIndexRef.current = nextStep;
+      setActiveHeroStepIndex(nextStep);
+      heroFrameRef.current?.setProgress(
+        heroStepToProgress(nextStep),
+        options?.immediate ?? prefersReducedMotion(),
+      );
+    },
+    [],
+  );
+
+  const goToSection = useCallback(
+    (
+      index: number,
+      options?: {
+        workProjectIndex?: number;
+        heroStepIndex?: number;
+        behavior?: ScrollBehavior;
+      },
+    ) => {
+      const nextIndex = Math.max(0, Math.min(SECTION_COUNT - 1, index));
+      const previousIndex = activeSectionIndexRef.current;
+
+      activeSectionIndexRef.current = nextIndex;
+      setActiveSectionIndex(nextIndex);
+
+      if (options?.workProjectIndex !== undefined) {
+        const projectIndex = Math.max(
+          0,
+          Math.min(WORK_PROJECT_COUNT - 1, options.workProjectIndex),
+        );
+        activeWorkProjectIndexRef.current = projectIndex;
+        setActiveWorkProjectIndex(projectIndex);
+      }
+
+      if (nextIndex === SECTION_HERO) {
+        const step =
+          options?.heroStepIndex ?? activeHeroStepIndexRef.current;
+        applyHeroStep(step);
+      }
+
+      const sectionChanged = previousIndex !== nextIndex;
+      const el = sectionRefs.current[nextIndex]?.current;
+
+      if (el && sectionChanged) {
+        el.scrollIntoView({
+          behavior: options?.behavior ?? "smooth",
+          block: "start",
+        });
+      }
+    },
+    [applyHeroStep],
+  );
 
   const handleNavigate = useCallback(
     (id: NavId | "top") => {
       if (id === "top") {
-        window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+        goToSection(SECTION_HERO, {
+          heroStepIndex: 0,
+          behavior: "smooth",
+        });
+        lockScroll();
         return;
       }
+
+      const sectionIndex = SECTION_IDS.indexOf(id as SectionId);
+      if (sectionIndex < 0) return;
 
       if (id === "work") {
-        const workTrigger = ScrollTrigger.getById("work-scrub");
-        if (!workTrigger) return;
-        if (reducedMotion) {
-          window.scrollTo({ top: workTrigger.start, behavior: "auto" });
-          return;
-        }
-        gsap.to(window, {
-          scrollTo: { y: workTrigger.start, autoKill: true },
-          duration: 0.85,
-          ease: "power2.inOut",
+        goToSection(SECTION_WORK, {
+          workProjectIndex: 0,
+          behavior: "smooth",
         });
-        return;
+      } else {
+        goToSection(sectionIndex, { behavior: "smooth" });
       }
 
-      const el = document.getElementById(id);
-      if (!el) return;
-
-      if (reducedMotion) {
-        gsap.set(window, { scrollTo: { y: el, autoKill: true } });
-        return;
-      }
-
-      gsap.to(window, {
-        scrollTo: { y: el, autoKill: true },
-        duration: 0.85,
-        ease: "power2.inOut",
-      });
+      lockScroll();
     },
-    [reducedMotion],
+    [goToSection, lockScroll],
   );
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
-
     const reduced = prefersReducedMotion();
-    const mobile = isMobile();
     setReducedMotion(reduced);
-    setUseFrameSequence(!reduced && !mobile);
+    setUseFrameSequence(!reduced && isDesktopViewport());
 
-    const hero = heroRef.current;
-    const heroPin = hero?.querySelector<HTMLElement>("[data-hero-pin]");
-    const work = workRef.current;
-    const workPin = work?.querySelector<HTMLElement>("[data-work-pin]");
-    if (!hero || !heroPin || !work || !workPin) return;
+    activeSectionIndexRef.current = SECTION_HERO;
+    activeHeroStepIndexRef.current = 0;
+    activeWorkProjectIndexRef.current = 0;
+    applyHeroStep(0, { immediate: true });
 
-    let destroyed = false;
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }, [applyHeroStep]);
 
-    const ctx = gsap.context(() => {
-      const heroCopies = getHeroCopyEls(heroPin);
-      const heroImage0 = heroPin.querySelector<HTMLElement>('[data-hero-image="0"]');
-      const heroImage1 = heroPin.querySelector<HTMLElement>('[data-hero-image="1"]');
-      const heroImageFront = heroPin.querySelector<HTMLElement>(
-        '[data-hero-image="front"]',
-      );
+  useEffect(() => {
+    if (!isDesktopViewport() || prefersReducedMotion()) return;
 
-      const projectTitles = gsap.utils.toArray<HTMLElement>("[data-project-label]");
-      const projectDetails = gsap.utils.toArray<HTMLElement>(
-        "[data-project-detail]",
-      );
-      const projectImages = gsap.utils.toArray<HTMLElement>(
-        "[data-project-image]",
-      );
-      const projectDots = gsap.utils.toArray<HTMLElement>("[data-project-dot]");
-      const projectTriggers = gsap.utils.toArray<HTMLButtonElement>(
-        "[data-project-trigger]",
-      );
+    const handleWheel = (event: WheelEvent) => {
+      const delta = event.deltaY;
+      if (Math.abs(delta) < WHEEL_DELTA_THRESHOLD) return;
 
-      const clickHandlers: Array<{ el: HTMLButtonElement; fn: () => void }> = [];
+      event.preventDefault();
 
-      const scrollToWorkProject = (index: number) => {
-        const workTrigger = ScrollTrigger.getById("work-scrub");
-        if (!workTrigger) return;
+      if (scrollLockedRef.current) return;
 
-        const progress = index / (WORK_STEP_COUNT - 1);
-        const target =
-          workTrigger.start +
-          (workTrigger.end - workTrigger.start) * progress;
+      const direction = delta > 0 ? "down" : "up";
+      const sectionIndex = activeSectionIndexRef.current;
 
-        if (reduced) {
-          window.scrollTo({ top: target, behavior: "auto" });
+      if (sectionIndex === SECTION_HERO) {
+        const heroStep = activeHeroStepIndexRef.current;
+
+        if (direction === "down") {
+          if (heroStep < HERO_STEP_COUNT - 1) {
+            applyHeroStep(heroStep + 1);
+            lockScroll(HERO_SCROLL_LOCK_MS);
+            return;
+          }
+
+          activeWorkProjectIndexRef.current = 0;
+          setActiveWorkProjectIndex(0);
+          goToSection(SECTION_WORK, {
+            workProjectIndex: 0,
+            behavior: "smooth",
+          });
+          lockScroll(WORK_SCROLL_LOCK_MS);
           return;
         }
 
-        gsap.to(window, {
-          scrollTo: { y: target, autoKill: true },
-          duration: 0.85,
-          ease: "power2.inOut",
-        });
-      };
-
-      projectTriggers.forEach((trigger, index) => {
-        const fn = () => scrollToWorkProject(index);
-        trigger.addEventListener("click", fn);
-        clickHandlers.push({ el: trigger, fn });
-      });
-
-      const frameSequenceActive = !reduced && !mobile;
-
-      const setHeroPortraits = (progress: number) => {
-        if (frameSequenceActive) return;
-
-        const opacities = [0, 0, 0];
-        [0, 1, 2].forEach((i) => {
-          opacities[i] = heroCopyOpacity(i, progress);
-        });
-
-        if (heroImage0) gsap.set(heroImage0, { opacity: opacities[0] });
-        if (heroImage1) gsap.set(heroImage1, { opacity: opacities[1] });
-        if (heroImageFront) gsap.set(heroImageFront, { opacity: opacities[2] });
-      };
-
-      const activeHeroStateRef = { current: -1 };
-
-      const setHeroState = (progress: number) => {
-        const next = activeHeroIndex(progress);
-        if (next === activeHeroStateRef.current) return;
-        activeHeroStateRef.current = next;
-
-        heroCopies.forEach((el, i) => {
-          el.classList.toggle("is-active", i === next);
-        });
-      };
-
-      const updateHero = (progress: number) => {
-        setHeroState(progress);
-        setHeroPortraits(progress);
-        heroFrameRef.current?.setProgress(progress);
-        if (activeSectionRef.current !== "hero") {
-          activeSectionRef.current = "hero";
-          setActiveSection("hero");
+        if (heroStep > 0) {
+          applyHeroStep(heroStep - 1);
         }
-      };
 
-      const setActiveProject = (index: number) => {
-        const i = gsap.utils.clamp(0, WORK_STEP_COUNT - 1, index);
-
-        projectTitles.forEach((title, idx) => {
-          const button = title.parentElement;
-          button?.classList.toggle("text-accent", idx === i);
-          button?.classList.toggle("text-white", idx !== i);
-        });
-
-        projectDetails.forEach((detail, idx) => {
-          gsap.set(detail, {
-            opacity: idx === i ? 1 : 0,
-            y: 0,
-            pointerEvents: idx === i ? "auto" : "none",
-          });
-        });
-
-        projectImages.forEach((image, idx) => {
-          gsap.set(image, {
-            opacity: idx === i ? 1 : 0,
-            scale: 1,
-            pointerEvents: "none",
-          });
-        });
-
-        projectDots.forEach((dot, idx) => {
-          gsap.set(dot, {
-            backgroundColor:
-              idx === i
-                ? "rgba(255, 90, 60, 0.95)"
-                : "rgba(255, 255, 255, 0.15)",
-          });
-        });
-      };
-
-      const activeSectionRef = { current: "hero" as NavId | "hero" };
-
-      const heroSnap = reduced
-        ? undefined
-        : {
-            snapTo: HERO_SNAP_POINTS,
-            duration: { min: 0.25, max: 0.45 },
-            delay: 0.08,
-            ease: "power2.out",
-            directional: true,
-          };
-
-      ScrollTrigger.create({
-        id: "hero-scrub",
-        trigger: hero,
-        start: "top top",
-        end: "+=300%",
-        pin: heroPin,
-        pinSpacing: true,
-        scrub: reduced || mobile ? 0.6 : 0.8,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        ...(heroSnap ? { snap: heroSnap } : {}),
-        onUpdate: (self) => updateHero(self.progress),
-      });
-
-      const onHeroFramesReady = () => {
-        if (destroyed) return;
-        ScrollTrigger.refresh();
-      };
-      window.addEventListener("hero-frames-ready", onHeroFramesReady);
-
-      const workSnap = reduced
-        ? undefined
-        : {
-            snapTo: 1 / (WORK_STEP_COUNT - 1),
-            duration: { min: 0.2, max: 0.4 },
-            delay: 0.06,
-            ease: "power2.out",
-            directional: true,
-          };
-
-      ScrollTrigger.create({
-        id: "work-scrub",
-        trigger: work,
-        start: "top top",
-        end: () => `+=${(WORK_STEP_COUNT - 1) * window.innerHeight}`,
-        pin: workPin,
-        pinSpacing: true,
-        scrub: reduced || mobile ? 0.6 : 0.8,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        ...(workSnap ? { snap: workSnap } : {}),
-        onUpdate: (self) => {
-          const index = Math.round(self.progress * (WORK_STEP_COUNT - 1));
-          setActiveProject(index);
-          if (activeSectionRef.current !== "work") {
-            activeSectionRef.current = "work";
-            setActiveSection("work");
-          }
-        },
-      });
-
-      const sections: Array<{ el: HTMLElement | null; id: NavId }> = [
-        { el: approachRef.current, id: "approach" },
-        { el: resultsRef.current, id: "results" },
-        { el: contactRef.current, id: "contact" },
-      ];
-
-      sections.forEach(({ el, id }) => {
-        if (!el) return;
-
-        ScrollTrigger.create({
-          trigger: el,
-          start: "top 50%",
-          end: "bottom 50%",
-          onEnter: () => setActiveSection(id),
-          onEnterBack: () => setActiveSection(id),
-          onLeaveBack: () => {
-            if (!reduced) setActiveSection("work");
-          },
-        });
-
-        if (!reduced) {
-          ScrollTrigger.create({
-            trigger: el,
-            start: "top bottom",
-            end: "top top",
-            snap: {
-              snapTo: 1,
-              duration: { min: 0.25, max: 0.45 },
-              delay: 0.08,
-              ease: "power2.out",
-              directional: true,
-            },
-          });
-        }
-      });
-
-      gsap.utils.toArray<HTMLElement>("[data-approach-card]").forEach((card, i) => {
-        gsap.from(card, {
-          opacity: 0,
-          y: reduced ? 0 : 28,
-          duration: reduced ? 0 : 0.8,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 85%",
-            toggleActions: "play none none reverse",
-          },
-          delay: reduced ? 0 : i * 0.08,
-        });
-      });
-
-      gsap.utils.toArray<HTMLElement>("[data-results-card]").forEach((card, i) => {
-        gsap.from(card, {
-          opacity: 0,
-          y: reduced ? 0 : 20,
-          duration: reduced ? 0 : 0.7,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 88%",
-            toggleActions: "play none none reverse",
-          },
-          delay: reduced ? 0 : i * 0.05,
-        });
-      });
-
-      const contactContent = contactRef.current?.querySelector(
-        "[data-contact-content]",
-      );
-      if (contactContent) {
-        gsap.from(contactContent, {
-          opacity: 0,
-          y: reduced ? 0 : 32,
-          duration: reduced ? 0 : 1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: contactContent,
-            start: "top 80%",
-            toggleActions: "play none none reverse",
-          },
-        });
+        lockScroll(HERO_SCROLL_LOCK_MS);
+        return;
       }
 
-      updateHero(0);
-      setActiveProject(0);
+      if (sectionIndex === SECTION_WORK) {
+        const projectIndex = activeWorkProjectIndexRef.current;
 
-      return () => {
-        destroyed = true;
-        window.removeEventListener("hero-frames-ready", onHeroFramesReady);
-        clickHandlers.forEach(({ el, fn }) =>
-          el.removeEventListener("click", fn),
-        );
-      };
-    });
+        if (direction === "down") {
+          if (projectIndex < WORK_PROJECT_COUNT - 1) {
+            const nextProject = projectIndex + 1;
+            activeWorkProjectIndexRef.current = nextProject;
+            setActiveWorkProjectIndex(nextProject);
+            lockScroll();
+            return;
+          }
 
-    const onResize = () => ScrollTrigger.refresh();
-    window.addEventListener("resize", onResize);
+          goToSection(SECTION_APPROACH, { behavior: "smooth" });
+          lockScroll();
+          return;
+        }
 
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onMotionChange = () => {
-      setReducedMotion(motionQuery.matches);
-      ScrollTrigger.refresh();
+        if (projectIndex > 0) {
+          const prevProject = projectIndex - 1;
+          activeWorkProjectIndexRef.current = prevProject;
+          setActiveWorkProjectIndex(prevProject);
+          lockScroll();
+          return;
+        }
+
+        goToSection(SECTION_HERO, {
+          heroStepIndex: HERO_STEP_COUNT - 1,
+          behavior: "smooth",
+        });
+        lockScroll(HERO_SCROLL_LOCK_MS);
+        return;
+      }
+
+      if (direction === "down") {
+        const nextSection = Math.min(sectionIndex + 1, SECTION_COUNT - 1);
+        if (nextSection === sectionIndex) return;
+
+        goToSection(nextSection, { behavior: "smooth" });
+        lockScroll();
+        return;
+      }
+
+      const previousSection = Math.max(sectionIndex - 1, 0);
+      if (previousSection === sectionIndex) return;
+
+      if (previousSection === SECTION_WORK) {
+        goToSection(SECTION_WORK, {
+          workProjectIndex: WORK_PROJECT_COUNT - 1,
+          behavior: "smooth",
+        });
+      } else {
+        goToSection(previousSection, { behavior: "smooth" });
+      }
+
+      lockScroll();
     };
-    motionQuery.addEventListener("change", onMotionChange);
 
-    const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 1000);
+    window.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
-      window.removeEventListener("resize", onResize);
-      motionQuery.removeEventListener("change", onMotionChange);
-      window.clearTimeout(refreshTimer);
-      ctx.revert();
+      window.removeEventListener("wheel", handleWheel);
+      if (scrollLockTimerRef.current !== null) {
+        window.clearTimeout(scrollLockTimerRef.current);
+      }
     };
+  }, [applyHeroStep, goToSection, lockScroll]);
+
+  useEffect(() => {
+    if (isDesktopViewport()) return;
+
+    const elements = sectionRefs.current
+      .map((ref) => ref.current)
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.45)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (!visible) return;
+
+        const index = elements.indexOf(visible.target as HTMLElement);
+        if (index < 0) return;
+
+        activeSectionIndexRef.current = index;
+        setActiveSectionIndex(index);
+      },
+      { threshold: [0.45, 0.6, 0.75] },
+    );
+
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onMotionChange = () => setReducedMotion(motionQuery.matches);
+    motionQuery.addEventListener("change", onMotionChange);
+    return () => motionQuery.removeEventListener("change", onMotionChange);
   }, []);
 
   return {
@@ -417,7 +341,9 @@ export function usePortfolioScroll() {
     resultsRef,
     contactRef,
     heroFrameRef,
-    activeSection,
+    activeSection: navIdFromIndex(activeSectionIndex),
+    activeProjectIndex: activeWorkProjectIndex,
+    heroStepIndex: activeHeroStepIndex,
     reducedMotion,
     useFrameSequence,
     handleNavigate,

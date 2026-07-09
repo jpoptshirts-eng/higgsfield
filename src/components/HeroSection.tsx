@@ -5,7 +5,7 @@ import type { HeroFrameSequenceHandle } from "@/components/HeroFrameSequence";
 import { HeroFrameSequence } from "@/components/HeroFrameSequence";
 import { HeroHeadlineOne } from "@/components/HeroHeadlineOne";
 import { ScrollIndicator } from "@/components/ScrollIndicator";
-import { HERO_METRICS, HERO_STATES } from "@/data/site";
+import { HERO_STATES } from "@/data/site";
 import { AccentText } from "@/components/ui/AccentText";
 import { ExternalArrow } from "@/components/ui/ExternalArrow";
 
@@ -13,29 +13,33 @@ type HeroSectionProps = {
   reducedMotion: boolean;
   useFrameSequence: boolean;
   frameSequenceRef: React.RefObject<HeroFrameSequenceHandle | null>;
+  heroStepIndex: number;
 };
 
 export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
   function HeroSection(
-    { reducedMotion, useFrameSequence, frameSequenceRef },
+    {
+      reducedMotion,
+      useFrameSequence,
+      frameSequenceRef,
+      heroStepIndex,
+    },
     ref,
   ) {
     return (
       <section
         ref={ref}
+        id="hero"
         data-hero-section
-        className="relative bg-black"
+        className="heroSection bg-black"
         aria-label="Introduction"
       >
-        <div
-          data-hero-pin
-          className="hero-pin relative h-screen w-full overflow-hidden bg-black"
-        >
+        <div className="hero-inner relative h-full w-full overflow-hidden">
           <div className="hero-copy">
             <div className="hero-copy-stack">
               <div
                 data-hero-copy={0}
-                className="hero-state is-active"
+                className={`hero-state${heroStepIndex === 0 ? " is-active" : ""}`}
               >
                 <HeroHeadlineOne />
                 <p className="hero-subcopy text-white/80">
@@ -48,7 +52,7 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
 
               <div
                 data-hero-copy={1}
-                className="hero-state"
+                className={`hero-state${heroStepIndex === 1 ? " is-active" : ""}`}
               >
                 <h1 className="hero-heading-secondary text-white">
                   <AccentText parts={HERO_STATES[1].headline} />
@@ -60,7 +64,7 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
 
               <div
                 data-hero-copy="metrics"
-                className="hero-state"
+                className={`hero-state${heroStepIndex === 2 ? " is-active" : ""}`}
               >
                 <div className="hero-proof-list">
                   <div className="hero-proof-item">
@@ -74,7 +78,8 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
                   <div className="hero-proof-item">
                     <p className="hero-proof-value">5m 06s faster</p>
                     <p className="hero-proof-label">
-                      Quick Shop repeat-purchase journey, from sign-in to submitted order
+                      Quick Shop repeat-purchase journey, from sign-in to submitted
+                      order
                     </p>
                     <div className="hero-proof-divider" />
                   </div>
@@ -82,7 +87,8 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
                   <div className="hero-proof-item">
                     <p className="hero-proof-value">50%+</p>
                     <p className="hero-proof-label">
-                      Reduction in estimated delivery effort for Waitrose Cellar account strategy
+                      Reduction in estimated delivery effort for Waitrose Cellar
+                      account strategy
                     </p>
                     <div className="hero-proof-divider" />
                   </div>
@@ -90,13 +96,19 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
                   <div className="hero-proof-item">
                     <p className="hero-proof-value">NPS 62</p>
                     <p className="hero-proof-label">
-                      Kaizen Languages learning experience shaped around motivation and retention
+                      Kaizen Languages learning experience shaped around motivation
+                      and retention
                     </p>
                   </div>
                 </div>
 
-                <a href="#work" className="hero-proof-cta">
-                  <span>View portfolio website</span>
+                <a
+                  href="https://www.jacinto.website/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hero-proof-cta"
+                >
+                  <span>Case studies</span>
                   <span className="arrow inline-block align-middle">
                     <ExternalArrow />
                   </span>
@@ -110,7 +122,9 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
             enabled={useFrameSequence}
           />
 
-          <ScrollIndicator visible={!reducedMotion} />
+          <ScrollIndicator
+            visible={!reducedMotion && heroStepIndex < 2}
+          />
         </div>
       </section>
     );

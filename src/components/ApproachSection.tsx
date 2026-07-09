@@ -9,46 +9,34 @@ export const ApproachSection = forwardRef<HTMLElement>(function ApproachSection(
   ref,
 ) {
   return (
-    <section
-      ref={ref}
-      id="approach"
-      className="relative snap-start bg-black px-6 py-24 md:px-10 md:py-32 lg:px-16"
-    >
-      <div className="mx-auto max-w-6xl">
-        <div className="max-w-3xl">
-          <h2 className="section-heading text-white">
-            I design by understanding{" "}
-            <span className="text-accent">behaviour</span>, connecting{" "}
-            <span className="text-accent">systems</span> and prototyping the
-            decisions that shape better products.
-          </h2>
-          <p className="hero-supporting mt-6 text-white/70">
-            Across grocery, fintech and ed-tech, my work combines customer
-            insight, product strategy, interaction design and measurable
-            business impact.
-          </p>
-        </div>
+    <section ref={ref} id="approach" className="approachSection" aria-label="Approach">
+      <div className="approachInner">
+        <h2 className="approachHeading text-white">
+          I design by understanding{" "}
+          <span className="text-accent">behaviour</span>, connecting{" "}
+          <span className="text-accent">systems</span> and{" "}
+          <span className="text-accent">prototyping</span> the decisions that
+          shape <span className="text-accent">better</span> products.
+        </h2>
 
-        <div className="approach-grid mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-          {APPROACH_CARDS.map((card) => (
+        <div className="approachCards">
+          {APPROACH_CARDS.map((card, index) => (
             <article
               key={card.id}
               data-approach-card
-              className="approach-card rounded-2xl border border-white/8 bg-white/[0.03] p-6"
+              className={`approachCard${index > 0 ? " approachCard--divided" : ""}`}
             >
-              <div className="relative mb-6 aspect-square w-full max-w-[140px]">
+              <div className="approachCardIcon">
                 <Image
                   src={card.icon}
                   alt=""
-                  fill
-                  sizes="140px"
-                  className="object-contain"
+                  width={44}
+                  height={44}
+                  className="h-11 w-11 object-contain"
                 />
               </div>
-              <h3 className="font-display text-xl text-white">{card.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-white/65 sm:text-base">
-                {card.description}
-              </p>
+              <h3 className="approachCardTitle">{card.title}</h3>
+              <p className="approachCardBody">{card.description}</p>
             </article>
           ))}
         </div>

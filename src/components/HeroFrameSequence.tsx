@@ -1,5 +1,6 @@
 "use client";
 
+import gsap from "gsap";
 import Image from "next/image";
 import {
   forwardRef,
@@ -15,8 +16,11 @@ import {
 } from "@/data/heroFrames";
 import { HERO_PORTRAITS } from "@/data/heroPortraits";
 
+export const HERO_PROGRESS_DURATION = 1;
+export const HERO_PROGRESS_EASE = "power3.inOut";
+
 export type HeroFrameSequenceHandle = {
-  setProgress: (progress: number) => void;
+  setProgress: (progress: number, immediate?: boolean) => void;
 };
 
 type HeroFrameSequenceProps = {
@@ -63,10 +67,10 @@ export const HeroFrameSequence = forwardRef<
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef({ width: 0, height: 0 });
   const imagesRef = useRef<Map<number, HTMLImageElement>>(new Map());
-  const targetFrameRef = useRef(10);
   const displayedFrameRef = useRef(10);
-  const rafRef = useRef<number | null>(null);
   const progressRef = useRef(0);
+  const animStateRef = useRef({ progress: 0 });
+  const tweenRef = useRef<gsap.core.Tween | null>(null);
   const readyRef = useRef(false);
   const failedRef = useRef(false);
 
@@ -86,21 +90,41 @@ export const HeroFrameSequence = forwardRef<
     displayedFrameRef.current = frameNumber;
   };
 
-  const tick = () => {
-    if (!readyRef.current || failedRef.current) {
-      rafRef.current = null;
+  const applyProgress = (progress: number) => {
+    const nextFrame = progressToFrameNumber(progress);
+    if (nextFrame !== displayedFrameRef.current) {
+      paint(nextFrame);
+    }
+  };
+
+  const animateToProgress = (progress: number, immediate: boolean) => {
+    tweenRef.current?.kill();
+
+    const clamped = Math.max(0, Math.min(1, progress));
+    progressRef.current = clamped;
+
+    if (!readyRef.current || failedRef.current) return;
+
+    if (immediate) {
+      animStateRef.current.progress = clamped;
+      applyProgress(clamped);
       return;
     }
 
-    const target = targetFrameRef.current;
-    if (displayedFrameRef.current !== target) paint(target);
+    if (Math.abs(animStateRef.current.progress - clamped) < 0.0001) {
+      applyProgress(clamped);
+      return;
+    }
 
-    rafRef.current = null;
-  };
-
-  const schedulePaint = () => {
-    if (rafRef.current !== null) return;
-    rafRef.current = requestAnimationFrame(tick);
+    tweenRef.current = gsap.to(animStateRef.current, {
+      progress: clamped,
+      duration: HERO_PROGRESS_DURATION,
+      ease: HERO_PROGRESS_EASE,
+      onUpdate: () => applyProgress(animStateRef.current.progress),
+      onComplete: () => {
+        tweenRef.current = null;
+      },
+    });
   };
 
   const resizeCanvas = () => {
@@ -123,14 +147,8 @@ export const HeroFrameSequence = forwardRef<
   };
 
   useImperativeHandle(ref, () => ({
-    setProgress(progress: number) {
-      progressRef.current = progress;
-      if (!readyRef.current || failedRef.current) return;
-
-      const next = progressToFrameNumber(progress);
-      if (next === targetFrameRef.current) return;
-      targetFrameRef.current = next;
-      schedulePaint();
+    setProgress(progress: number, immediate = false) {
+      animateToProgress(progress, immediate);
     },
   }));
 
@@ -148,9 +166,8 @@ export const HeroFrameSequence = forwardRef<
         setReady(true);
         resizeCanvas();
         const startFrame = progressToFrameNumber(progressRef.current);
-        targetFrameRef.current = startFrame;
+        displayedFrameRef.current = startFrame;
         paint(startFrame);
-        // Let the scroll system know sizing is stable.
         window.dispatchEvent(new Event("hero-frames-ready"));
       }
     };
@@ -185,7 +202,7 @@ export const HeroFrameSequence = forwardRef<
 
   useEffect(() => {
     return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      tweenRef.current?.kill();
     };
   }, []);
 
@@ -201,7 +218,11 @@ export const HeroFrameSequence = forwardRef<
     >
       <canvas
         ref={canvasRef}
-        className={showCanvas ? "hero-media-canvas" : "hero-media-canvas hero-media-canvas--hidden"}
+        className={
+          showCanvas
+            ? "hero-media-canvas"
+            : "hero-media-canvas hero-media-canvas--hidden"
+        }
         aria-hidden={!showCanvas}
         aria-label="Jacinto De Matos portrait"
       />
