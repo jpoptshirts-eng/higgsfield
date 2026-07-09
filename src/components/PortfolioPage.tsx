@@ -4,6 +4,7 @@ import { ApproachSection } from "@/components/ApproachSection";
 import { ContactSection } from "@/components/ContactSection";
 import { HeroSection } from "@/components/HeroSection";
 import { Navigation } from "@/components/Navigation";
+import { SectionIndicator } from "@/components/SectionIndicator";
 import { ResultsSection } from "@/components/ResultsSection";
 import { WorkSection } from "@/components/WorkSection";
 import { usePortfolioScroll } from "@/hooks/usePortfolioScroll";
@@ -17,6 +18,7 @@ export function PortfolioPage() {
     contactRef,
     heroFrameRef,
     activeSection,
+    activeSectionIndex,
     activeProjectIndex,
     heroStepIndex,
     reducedMotion,
@@ -27,6 +29,10 @@ export function PortfolioPage() {
   return (
     <>
       <Navigation activeSection={activeSection} onNavigate={handleNavigate} />
+      <SectionIndicator
+        activeSectionIndex={activeSectionIndex}
+        visible={!reducedMotion}
+      />
 
       <main className="bg-black text-white">
         <HeroSection

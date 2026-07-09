@@ -4,7 +4,6 @@ import { forwardRef } from "react";
 import type { HeroFrameSequenceHandle } from "@/components/HeroFrameSequence";
 import { HeroFrameSequence } from "@/components/HeroFrameSequence";
 import { HeroHeadlineOne } from "@/components/HeroHeadlineOne";
-import { ScrollIndicator } from "@/components/ScrollIndicator";
 import { HERO_STATES } from "@/data/site";
 import { AccentText } from "@/components/ui/AccentText";
 import { ExternalArrow } from "@/components/ui/ExternalArrow";
@@ -120,10 +119,6 @@ export const HeroSection = forwardRef<HTMLElement, HeroSectionProps>(
           <HeroFrameSequence
             ref={frameSequenceRef}
             enabled={useFrameSequence}
-          />
-
-          <ScrollIndicator
-            visible={!reducedMotion && heroStepIndex < 2}
           />
         </div>
       </section>

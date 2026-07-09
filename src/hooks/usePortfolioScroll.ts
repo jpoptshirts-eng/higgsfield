@@ -342,6 +342,7 @@ export function usePortfolioScroll() {
     contactRef,
     heroFrameRef,
     activeSection: navIdFromIndex(activeSectionIndex),
+    activeSectionIndex,
     activeProjectIndex: activeWorkProjectIndex,
     heroStepIndex: activeHeroStepIndex,
     reducedMotion,
