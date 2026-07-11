@@ -494,6 +494,58 @@ h3,
   font-weight: 400;
 }
 
+@media (max-width: 544px) {
+  .hero-heading {
+    font-size: 54px;
+  }
+
+  .hero-heading-secondary {
+    font-size: 40px;
+  }
+
+  .approachHeading {
+    font-size: 40px;
+  }
+
+  .contact-heading {
+    font-size: 40px;
+  }
+
+  .project-list-title {
+    font-size: 48px;
+  }
+
+  .section-heading {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 403px) {
+  .hero-heading {
+    font-size: 48px;
+  }
+
+  .hero-heading-secondary {
+    font-size: 32px;
+  }
+
+  .approachHeading {
+    font-size: 32px;
+  }
+
+  .contact-heading {
+    font-size: 40px;
+  }
+
+  .project-list-title {
+    font-size: 40px;
+  }
+
+  .section-heading {
+    font-size: 32px;
+  }
+}
+
 .approachCards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -542,6 +594,17 @@ h3,
   font-size: 18px;
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.78);
+}
+
+@media (min-width: 768px) {
+  .approachCardTitle {
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+
+  .approachCardBody {
+    font-size: 24px;
+  }
 }
 
 /* Results */
@@ -607,6 +670,22 @@ h3,
   color: rgba(255, 255, 255, 0.78);
 }
 
+@media (min-width: 768px) {
+  .resultCardTitle {
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+
+  .resultCardBody {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .resultMetricList {
+    font-size: 20px;
+  }
+}
+
 .resultMetricList li {
   position: relative;
   padding-left: 14px;
@@ -617,6 +696,36 @@ h3,
   position: absolute;
   left: 0;
   color: rgba(255, 255, 255, 0.45);
+}
+
+.resultPresentationLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.resultPresentationLink:hover,
+.resultPresentationLink:focus-visible {
+  color: var(--accent-hover);
+}
+
+.result-presentation-arrow {
+  font-size: clamp(20px, 1.6vw, 28px);
+  line-height: 1;
+}
+
+@media (min-width: 768px) {
+  .resultPresentationLink {
+    margin-top: 24px;
+    font-size: 20px;
+  }
 }
 
 @media (max-width: 1023px) {

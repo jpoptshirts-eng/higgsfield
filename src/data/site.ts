@@ -175,27 +175,32 @@ export const RESULTS = [
     impact:
       "I start with how people actually behave, not just what they say they want.",
     metrics: ["6/7 ease-of-use", "+72% order frequency", "+36% AOV"],
+    presentationUrl: "https://www.figma.com/deck/7tZvvjMAGYWm2TyfyCSe6n",
   },
   {
     project: "Quick Shop",
     impact:
       "Reducing repeat-shopping friction through behavioural personalisation",
     metrics: ["25% faster completion", "5m 06s saved", "+19% items per basket"],
+    presentationUrl: "https://www.figma.com/deck/Uzc4dRWgotNcPkTVTJDPko",
   },
   {
     project: "Cellar",
     impact: "Unlocking commercial value by reframing the account strategy",
     metrics: ["£2m CRM opportunity", "50%+ effort reduction", "12+ months avoided"],
+    presentationUrl: "https://www.figma.com/deck/4t4dj2KitDzjGJjtH6DNQr",
   },
   {
     project: "PrimaryBid",
     impact: "Creating foundations for a regulated transactional web platform",
     metrics: ["4 journeys redesigned", "Responsive T-Web", "Broker dashboard support"],
+    presentationUrl: "https://www.figma.com/deck/hSkz3kH0FCQ4tQDZwMZ4yc",
   },
   {
     project: "Kaizen Languages",
     impact: "Improving learning, retention and subscription performance",
     metrics: ["NPS 62", "+35% streak engagement", "+25% lesson completion"],
+    presentationUrl: "https://www.figma.com/deck/W7GP77RWfz8nYHx9w4JE12",
   },
   {
     project: "Smarter",

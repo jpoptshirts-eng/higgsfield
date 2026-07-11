@@ -2,6 +2,7 @@
 
 import { forwardRef } from "react";
 import { RESULTS } from "@/data/site";
+import { ExternalArrow } from "@/components/ui/ExternalArrow";
 
 export const ResultsSection = forwardRef<HTMLElement>(function ResultsSection(
   _,
@@ -24,6 +25,17 @@ export const ResultsSection = forwardRef<HTMLElement>(function ResultsSection(
                   <li key={metric}>{metric}</li>
                 ))}
               </ul>
+              {"presentationUrl" in result && result.presentationUrl ? (
+                <a
+                  href={result.presentationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="resultPresentationLink"
+                >
+                  View presentation
+                  <ExternalArrow className="result-presentation-arrow" />
+                </a>
+              ) : null}
             </article>
           ))}
         </div>
